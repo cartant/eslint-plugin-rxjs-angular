@@ -1,0 +1,87 @@
+{
+  "author": "Nicholas Jamieson <nicholas@cartant.com>",
+  "bugs": {
+    "url": "https://github.com/cartant/eslint-plugin-rxjs-angular/issues"
+  },
+  "dependencies": {
+    "common-tags": "^1.8.0",
+    "decamelize": "^3.0.0",
+    "eslint-etc": "^0.0.8",
+    "requireindex": "~1.2.0",
+    "tslib": "^1.8.0",
+    "tsutils": "^3.0.0",
+    "tsutils-etc": "^1.0.0"
+  },
+  "description": "Angular RxJS rules for ESLint",
+  "devDependencies": {
+    "@cartant/tslint-config": "^2.0.0",
+    "@cartant/tslint-config-etc": "^2.0.0",
+    "@types/chai": "^4.2.0",
+    "@types/common-tags": "^1.8.0",
+    "@types/eslint": "^6.1.0",
+    "@types/mocha": "^5.2.6",
+    "@types/node": "^12.0.0",
+    "@typescript-eslint/parser": "^2.0.0",
+    "chai": "^4.2.0",
+    "eslint": "^6.1.0",
+    "husky": "^3.0.0",
+    "lint-staged": "^9.0.0",
+    "mocha": "^6.0.1",
+    "prettier": "^1.17.0",
+    "rimraf": "^3.0.0",
+    "ts-node": "^8.0.2",
+    "tslint": "^5.1.0",
+    "tslint-etc": "^1.6.0",
+    "typescript": "~3.7.2"
+  },
+  "homepage": "https://github.com/cartant/eslint-plugin-rxjs-angular",
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "keywords": [
+    "lint",
+    "rules",
+    "eslint",
+    "rxjs",
+    "angular"
+  ],
+  "license": "MIT",
+  "lint-staged": {
+    "*.{js,ts}": [
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "main": "./dist/index.js",
+  "name": "eslint-plugin-rxjs-angular",
+  "optionalDependencies": {},
+  "peerDependencies": {
+    "eslint": "^5.0.0 || ^6.0.0",
+    "typescript": "^3.0.0"
+  },
+  "private": false,
+  "publishConfig": {
+    "tag": "latest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cartant/eslint-plugin-rxjs-angular.git"
+  },
+  "scripts": {
+    "dist": "yarn run lint && yarn run dist:build",
+    "dist:build": "yarn run dist:clean && tsc -p tsconfig-dist.json",
+    "dist:clean": "rimraf dist",
+    "lint": "yarn run lint:source && yarn run lint:tests",
+    "lint:source": "tslint --project tsconfig.json source/**/*.ts",
+    "lint:tests": "tslint --project tsconfig.json tests/**/*.ts",
+    "prepublishOnly": "yarn run test && yarn run dist",
+    "prettier": "prettier --write \"./{src,tests}/**/*.{js,json,ts,tsx}\"",
+    "prettier:ci": "prettier --check \"./{src,tests}/**/*.{js,json,ts,tsx}\"",
+    "test": "yarn run test:rules",
+    "test:debug": "mocha -r ts-node/register -t 5000 tests/rules/prefer-async-pipe.ts",
+    "test:rules": "mocha -r ts-node/register -t 5000 tests/rules/*.ts"
+  },
+  "version": "0.0.1-beta.0"
+}
