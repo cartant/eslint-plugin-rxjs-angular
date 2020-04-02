@@ -4,7 +4,6 @@
  */
 
 import { Rule } from "eslint";
-import { query } from "eslint-etc";
 import * as es from "estree";
 import { getParent, typecheck } from "../utils";
 
@@ -14,37 +13,45 @@ const rule: Rule.RuleModule = {
       category: "RxJS",
       description:
         "Forbids the calling of `subscribe` within Angular components.",
-      recommended: false
+      recommended: false,
     },
     fixable: null,
     messages: {
       forbidden:
-        "Calling `subscribe` in a component is forbidden; use an `async` pipe instead."
+        "Calling `subscribe` in a component is forbidden; use an `async` pipe instead.",
     },
-    schema: []
+    schema: [],
   },
-  create: context => {
+  create: (context) => {
     const { couldBeObservable } = typecheck(context);
+    const componentMap = new WeakMap<es.Node, void>();
     return {
+      [`CallExpression > MemberExpression[property.name="subscribe"]`]: (
+        memberExpression: es.MemberExpression
+      ) => {
+        let parent = getParent(memberExpression);
+        while (parent) {
+          if (
+            componentMap.has(parent) &&
+            couldBeObservable(memberExpression.object)
+          ) {
+            context.report({
+              messageId: "forbidden",
+              node: memberExpression.property,
+            });
+            return;
+          }
+          parent = getParent(parent);
+        }
+      },
       [`ClassDeclaration > Decorator[expression.callee.name="Component"]`]: (
         node: es.Node
       ) => {
         const classDeclaration = getParent(node) as es.ClassDeclaration;
-        const memberExpressions = query(
-          classDeclaration,
-          `CallExpression > MemberExpression[property.name="subscribe"]`
-        ) as es.MemberExpression[];
-        memberExpressions.forEach(memberExpression => {
-          if (couldBeObservable(memberExpression.object)) {
-            context.report({
-              messageId: "forbidden",
-              node: memberExpression.property
-            });
-          }
-        });
-      }
+        componentMap.set(classDeclaration);
+      },
     };
-  }
+  },
 };
 
 export = rule;
