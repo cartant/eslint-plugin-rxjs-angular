@@ -19,7 +19,7 @@ ruleTester({ types: true }).run("prefer-async-pipe", rule, {
       class SomeComponent {
         something = of("foo");
       }
-    `
+    `,
   ],
   invalid: [
     {
@@ -43,9 +43,9 @@ ruleTester({ types: true }).run("prefer-async-pipe", rule, {
           line: 10,
           column: 15,
           endLine: 10,
-          endColumn: 24
-        }
-      ]
-    }
-  ]
+          endColumn: 24,
+        },
+      ],
+    },
+  ],
 });

@@ -8,5 +8,5 @@ import { ruleTester } from "../utils";
 
 ruleTester({ types: true }).run("prefer-comosition", rule, {
   valid: [],
-  invalid: []
+  invalid: [],
 });
