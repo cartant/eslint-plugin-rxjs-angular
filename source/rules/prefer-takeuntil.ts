@@ -41,6 +41,11 @@ const rule: Rule.RuleModule = {
     ],
   },
   create: (context) => {
+    type Entry = {
+      classDeclaration: es.ClassDeclaration;
+    };
+    const entries: Entry[] = [];
+
     return {
       "CallExpression[callee.property.name='subscribe']": (
         node: es.CallExpression

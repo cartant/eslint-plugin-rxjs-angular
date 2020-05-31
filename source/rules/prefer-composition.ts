@@ -49,7 +49,7 @@ const rule: Rule.RuleModule = {
     const [config = {}] = context.options;
     const { checkDecorators = ["Component"] } = config;
 
-    type Record = {
+    type Entry = {
       addCallExpressions: es.CallExpression[];
       classDeclaration: es.ClassDeclaration;
       classProperties: es.Node[];
@@ -59,9 +59,9 @@ const rule: Rule.RuleModule = {
       subscriptions: Set<string>;
       unsubscribeCallExpressions: es.CallExpression[];
     };
-    const records: Record[] = [];
+    const entries: Entry[] = [];
 
-    function checkRecord(record: Record) {
+    function checkRecord(record: Entry) {
       const {
         classDeclaration,
         classProperties,
@@ -129,6 +129,11 @@ const rule: Rule.RuleModule = {
       });
     }
 
+    function getEntry() {
+      const { length, [length - 1]: entry } = entries;
+      return entry;
+    }
+
     function getMethodCalleeName(callExpression: es.CallExpression) {
       const { callee } = callExpression;
       if (isMemberExpression(callee)) {
@@ -151,11 +156,6 @@ const rule: Rule.RuleModule = {
       return undefined;
     }
 
-    function getRecord() {
-      const { length, [length - 1]: record } = records;
-      return record;
-    }
-
     function hasDecorator(node: es.ClassDeclaration) {
       const { decorators } = node as any;
       return (
@@ -174,8 +174,8 @@ const rule: Rule.RuleModule = {
       );
     }
 
-    function isComposed(callExpression: es.CallExpression, record: Record) {
-      const { addCallExpressions, subscriptions } = record;
+    function isComposed(callExpression: es.CallExpression, entry: Entry) {
+      const { addCallExpressions, subscriptions } = entry;
       const parent = getParent(callExpression);
       if (isCallExpression(parent)) {
         const addCallExpression = addCallExpressions.find(
@@ -196,21 +196,21 @@ const rule: Rule.RuleModule = {
         return true;
       }
       if (isVariableDeclarator(parent) && isIdentifier(parent.id)) {
-        return isVariableComposed(parent.id, record);
+        return isVariableComposed(parent.id, entry);
       }
       if (
         isAssignmentExpression(parent) &&
         isIdentifier(parent.left) &&
         parent.operator === "="
       ) {
-        return isVariableComposed(parent.left, record);
+        return isVariableComposed(parent.left, entry);
       }
       return false;
     }
 
-    function isVariableComposed(identifier: es.Identifier, record: Record) {
+    function isVariableComposed(identifier: es.Identifier, entry: Entry) {
       const { name } = identifier;
-      const { addCallExpressions, subscriptions } = record;
+      const { addCallExpressions, subscriptions } = entry;
       const addCallExpression = addCallExpressions.find(
         (callExpression) => getMethodCalleeName(callExpression) === name
       );
@@ -229,29 +229,29 @@ const rule: Rule.RuleModule = {
       "CallExpression[callee.property.name='add']": (
         node: es.CallExpression
       ) => {
-        const record = getRecord();
-        if (record && record.hasDecorator) {
-          record.addCallExpressions.push(node);
+        const entry = getEntry();
+        if (entry && entry.hasDecorator) {
+          entry.addCallExpressions.push(node);
         }
       },
       "CallExpression[callee.property.name='subscribe']": (
         node: es.CallExpression
       ) => {
-        const record = getRecord();
-        if (record && record.hasDecorator) {
-          record.subscribeCallExpressions.push(node);
+        const entry = getEntry();
+        if (entry && entry.hasDecorator) {
+          entry.subscribeCallExpressions.push(node);
         }
       },
       "CallExpression[callee.property.name='unsubscribe']": (
         node: es.CallExpression
       ) => {
-        const record = getRecord();
-        if (record && record.hasDecorator) {
-          record.unsubscribeCallExpressions.push(node);
+        const entry = getEntry();
+        if (entry && entry.hasDecorator) {
+          entry.unsubscribeCallExpressions.push(node);
         }
       },
       ClassDeclaration: (node: es.ClassDeclaration) => {
-        records.push({
+        entries.push({
           addCallExpressions: [],
           classDeclaration: node,
           classProperties: [],
@@ -262,23 +262,23 @@ const rule: Rule.RuleModule = {
         });
       },
       "ClassDeclaration:exit": (node: es.ClassDeclaration) => {
-        const record = records.pop();
-        if (record && record.hasDecorator) {
-          checkRecord(record);
+        const entry = entries.pop();
+        if (entry && entry.hasDecorator) {
+          checkRecord(entry);
         }
       },
       ClassProperty: (node: es.Node) => {
-        const record = getRecord();
-        if (record && record.hasDecorator) {
-          record.classProperties.push(node);
+        const entry = getEntry();
+        if (entry && entry.hasDecorator) {
+          entry.classProperties.push(node);
         }
       },
       "MethodDefinition[key.name='ngOnDestroy'][kind='method']": (
         node: es.MethodDefinition
       ) => {
-        const record = getRecord();
-        if (record && record.hasDecorator) {
-          record.ngOnDestroyDefinition = node;
+        const entry = getEntry();
+        if (entry && entry.hasDecorator) {
+          entry.ngOnDestroyDefinition = node;
         }
       },
     };
