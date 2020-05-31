@@ -61,7 +61,7 @@ const rule: Rule.RuleModule = {
     };
     const entries: Entry[] = [];
 
-    function checkRecord(record: Entry) {
+    function checkEntry(record: Entry) {
       const {
         classDeclaration,
         classProperties,
@@ -175,6 +175,9 @@ const rule: Rule.RuleModule = {
     }
 
     function isComposed(callExpression: es.CallExpression, entry: Entry) {
+      // A call to subscribe is composed if it's directly added to a
+      // subscription or if it's assigned to a variable that is added to a
+      // subscription.
       const { addCallExpressions, subscriptions } = entry;
       const parent = getParent(callExpression);
       if (isCallExpression(parent)) {
@@ -209,6 +212,8 @@ const rule: Rule.RuleModule = {
     }
 
     function isVariableComposed(identifier: es.Identifier, entry: Entry) {
+      // A subscription variable is composed if it's added to another
+      // subscription.
       const { name } = identifier;
       const { addCallExpressions, subscriptions } = entry;
       const addCallExpression = addCallExpressions.find(
@@ -242,14 +247,6 @@ const rule: Rule.RuleModule = {
           entry.subscribeCallExpressions.push(node);
         }
       },
-      "CallExpression[callee.property.name='unsubscribe']": (
-        node: es.CallExpression
-      ) => {
-        const entry = getEntry();
-        if (entry && entry.hasDecorator) {
-          entry.unsubscribeCallExpressions.push(node);
-        }
-      },
       ClassDeclaration: (node: es.ClassDeclaration) => {
         entries.push({
           addCallExpressions: [],
@@ -264,7 +261,7 @@ const rule: Rule.RuleModule = {
       "ClassDeclaration:exit": (node: es.ClassDeclaration) => {
         const entry = entries.pop();
         if (entry && entry.hasDecorator) {
-          checkRecord(entry);
+          checkEntry(entry);
         }
       },
       ClassProperty: (node: es.Node) => {
@@ -279,6 +276,14 @@ const rule: Rule.RuleModule = {
         const entry = getEntry();
         if (entry && entry.hasDecorator) {
           entry.ngOnDestroyDefinition = node;
+        }
+      },
+      "MethodDefinition[key.name='ngOnDestroy'][kind='method'] CallExpression[callee.property.name='unsubscribe']": (
+        node: es.CallExpression
+      ) => {
+        const entry = getEntry();
+        if (entry && entry.hasDecorator) {
+          entry.unsubscribeCallExpressions.push(node);
         }
       },
     };

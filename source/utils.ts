@@ -163,3 +163,7 @@ export function isAssignmentExpression(
 ): node is es.AssignmentExpression {
   return node.type === "AssignmentExpression";
 }
+
+export function isThisExpression(node: es.Node): node is es.ThisExpression {
+  return node.type === "ThisExpression";
+}

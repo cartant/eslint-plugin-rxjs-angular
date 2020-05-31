@@ -6,6 +6,13 @@
 import { stripIndent } from "common-tags";
 import { Rule } from "eslint";
 import * as es from "estree";
+import {
+  isCallExpression,
+  isIdentifier,
+  isMemberExpression,
+  isThisExpression,
+  typecheck,
+} from "../utils";
 
 const rule: Rule.RuleModule = {
   meta: {
@@ -27,13 +34,15 @@ const rule: Rule.RuleModule = {
       {
         properties: {
           alias: { type: "array", items: { type: "string" } },
+          checkComplete: { type: "boolean" },
           checkDecorators: { type: "array", items: { type: "string" } },
           checkDestroy: { type: "boolean" },
         },
         type: "object",
         description: stripIndent`
-          An optional object with optional \`alias\`, \`checkDecorators\` and \`checkDestroy\` properties.
+          An optional object with optional \`alias\`, \`checkComplete\`, \`checkDecorators\` and \`checkDestroy\` properties.
           The \`alias\` property is an array containing the names of operators that aliases for \`takeUntil\`.
+          The \`checkComplete\` property is a boolean that determines whether or not \`complete\` must be called after \`next\`.
           The \`checkDecorators\` property is an array containing the names of the decorators that determine whether or not a class is checked.
           The \`checkDestroy\` property is a boolean that determines whether or not a \`Subject\`-based \`ngOnDestroy\` must be implemented.
         `,
@@ -41,360 +50,305 @@ const rule: Rule.RuleModule = {
     ],
   },
   create: (context) => {
+    const { couldBeObservable } = typecheck(context);
+
+    // If an alias is specified, check for the subject-based destroy only if
+    // it's explicitly configured. It's extremely unlikely a subject-based
+    // destroy mechanism will be used in conjunction with an alias.
+
+    const [config = {}] = context.options;
+    const {
+      alias = [],
+      checkComplete = false,
+      checkDecorators = ["Component"],
+      checkDestroy = alias.length === 0,
+    } = config;
+
     type Entry = {
       classDeclaration: es.ClassDeclaration;
+      classProperties: es.Node[];
+      completeCallExpressions: es.CallExpression[];
+      hasDecorator: boolean;
+      nextCallExpressions: es.CallExpression[];
+      ngOnDestroyDefinition?: es.MethodDefinition;
+      subscribeCallExpressions: es.CallExpression[];
+      subscribeCallExpressionsToNames: Map<es.CallExpression, Set<string>>;
     };
     const entries: Entry[] = [];
+
+    function checkEntry(entry: Entry) {
+      const { subscribeCallExpressions } = entry;
+      subscribeCallExpressions.forEach((callExpression) => {
+        const { callee } = callExpression;
+        if (!isMemberExpression(callee)) {
+          return;
+        }
+        const { object } = callee;
+        if (!couldBeObservable(object)) {
+          return;
+        }
+        checkSubscribe(callExpression, entry);
+      });
+
+      if (checkDestroy) {
+        checkNgOnDestroy(entry);
+      }
+    }
+
+    function checkNgOnDestroy(entry: Entry) {
+      const {
+        classDeclaration,
+        completeCallExpressions,
+        nextCallExpressions,
+        ngOnDestroyDefinition,
+        subscribeCallExpressionsToNames,
+      } = entry;
+      if (subscribeCallExpressionsToNames.size === 0) {
+        return;
+      }
+
+      if (!ngOnDestroyDefinition) {
+        context.report({
+          messageId: "noDestroy",
+          node: classDeclaration.id,
+        });
+        return;
+      }
+
+      // If a subscription to a .pipe() has at least one takeUntil that has no
+      // failures, the subscribe call is fine. Callers should be able to use
+      // secondary takUntil operators. However, there must be at least one
+      // takeUntil operator that conforms to the pattern that this rule
+      // enforces.
+
+      type Check = {
+        descriptors: Rule.ReportDescriptor[];
+        report: boolean;
+      };
+      const namesToChecks = new Map<string, Check>();
+
+      const names = new Set<string>();
+      subscribeCallExpressionsToNames.forEach((value) =>
+        value.forEach((name) => names.add(name))
+      );
+      names.forEach((name) => {
+        const check: Check = {
+          descriptors: [],
+          report: false,
+        };
+        namesToChecks.set(name, check);
+
+        if (!checkSubjectProperty(name, entry)) {
+          check.descriptors.push({
+            data: { name },
+            messageId: "notDeclared",
+            node: classDeclaration.id,
+          });
+        }
+        if (!checkSubjectCall(name, nextCallExpressions)) {
+          check.descriptors.push({
+            data: { method: "next", name },
+            messageId: "notCalled",
+            node: ngOnDestroyDefinition.key,
+          });
+        }
+        if (checkComplete && !checkSubjectCall(name, completeCallExpressions)) {
+          check.descriptors.push({
+            data: { method: "complete", name },
+            messageId: "notCalled",
+            node: ngOnDestroyDefinition.key,
+          });
+        }
+      });
+
+      subscribeCallExpressionsToNames.forEach((names) => {
+        const report = [...names].every(
+          (name) => namesToChecks.get(name).descriptors.length > 0
+        );
+        if (report) {
+          names.forEach((name) => (namesToChecks.get(name).report = true));
+        }
+      });
+      namesToChecks.forEach((check) => {
+        if (check.report) {
+          check.descriptors.forEach((descriptor) => context.report(descriptor));
+        }
+      });
+    }
+
+    function checkOperator(callExpression: es.CallExpression) {
+      const { callee } = callExpression;
+      if (!isIdentifier(callee)) {
+        return { found: false };
+      }
+      if (callee.name === "takeUntil" || alias.includes(callee.name)) {
+        const [arg] = callExpression.arguments;
+        if (arg) {
+          if (
+            isMemberExpression(arg) &&
+            isThisExpression(arg.object) &&
+            isIdentifier(arg.property)
+          ) {
+            return { found: true, name: arg.property.name };
+          } else if (arg && isIdentifier(arg)) {
+            return { found: true, name: arg.name };
+          }
+        }
+        if (!checkDestroy) {
+          return { found: true };
+        }
+      }
+      return { found: false };
+    }
+
+    function checkSubjectCall(
+      name: string,
+      callExpressions: es.CallExpression[]
+    ) {
+      const callExpression = callExpressions.find(
+        ({ callee }) =>
+          (isMemberExpression(callee) &&
+            isIdentifier(callee.object) &&
+            callee.object.name === name) ||
+          (isMemberExpression(callee) &&
+            isMemberExpression(callee.object) &&
+            isThisExpression(callee.object.object) &&
+            isIdentifier(callee.object.property) &&
+            callee.object.property.name === name)
+      );
+      return Boolean(callExpression);
+    }
+
+    function checkSubjectProperty(name: string, entry: Entry) {
+      const { classProperties } = entry;
+      const classProperty = classProperties.find(
+        (classProperty: any) => classProperty.key.name === name
+      );
+      return Boolean(classProperty);
+    }
+
+    function checkSubscribe(callExpression: es.CallExpression, entry: Entry) {
+      const { subscribeCallExpressionsToNames } = entry;
+      const names = subscribeCallExpressionsToNames.get(callExpression);
+      let takeUntilFound = false;
+
+      const { callee } = callExpression;
+      if (!isMemberExpression(callee)) {
+        return;
+      }
+      const { object, property } = callee;
+
+      if (
+        isCallExpression(object) &&
+        isMemberExpression(object.callee) &&
+        isIdentifier(object.callee.property) &&
+        object.callee.property.name === "pipe"
+      ) {
+        const operators = object.arguments;
+        operators.forEach((operator) => {
+          if (isCallExpression(operator)) {
+            const { found, name } = checkOperator(operator);
+            takeUntilFound = found;
+            if (name) {
+              names.add(name);
+            }
+          }
+        });
+      }
+
+      if (!takeUntilFound) {
+        context.report({
+          messageId: "noTakeUntil",
+          node: property,
+        });
+      }
+    }
+
+    function getEntry() {
+      const { length, [length - 1]: entry } = entries;
+      return entry;
+    }
+
+    function hasDecorator(node: es.ClassDeclaration) {
+      const { decorators } = node as any;
+      return (
+        decorators &&
+        decorators.some((decorator: any) => {
+          const { expression } = decorator;
+          if (!isCallExpression(expression)) {
+            return false;
+          }
+          if (!isIdentifier(expression.callee)) {
+            return false;
+          }
+          const { name } = expression.callee;
+          return checkDecorators.some((check: string) => name === check);
+        })
+      );
+    }
 
     return {
       "CallExpression[callee.property.name='subscribe']": (
         node: es.CallExpression
-      ) => {},
-      ClassDeclaration: (node: es.ClassDeclaration) => {},
-      "ClassDeclaration:exit": (node: es.ClassDeclaration) => {},
-      ClassProperty: (node: es.Node) => {},
+      ) => {
+        const entry = getEntry();
+        if (entry && entry.hasDecorator) {
+          entry.subscribeCallExpressions.push(node);
+          entry.subscribeCallExpressionsToNames.set(node, new Set<string>());
+        }
+      },
+      ClassDeclaration: (node: es.ClassDeclaration) => {
+        entries.push({
+          classDeclaration: node,
+          classProperties: [],
+          completeCallExpressions: [],
+          nextCallExpressions: [],
+          hasDecorator: hasDecorator(node),
+          subscribeCallExpressions: [],
+          subscribeCallExpressionsToNames: new Map<
+            es.CallExpression,
+            Set<string>
+          >(),
+        });
+      },
+      "ClassDeclaration:exit": (node: es.ClassDeclaration) => {
+        const entry = entries.pop();
+        if (entry && entry.hasDecorator) {
+          checkEntry(entry);
+        }
+      },
+      ClassProperty: (node: es.Node) => {
+        const entry = getEntry();
+        if (entry && entry.hasDecorator) {
+          entry.classProperties.push(node);
+        }
+      },
       "MethodDefinition[key.name='ngOnDestroy'][kind='method']": (
         node: es.MethodDefinition
-      ) => {},
+      ) => {
+        const entry = getEntry();
+        if (entry && entry.hasDecorator) {
+          entry.ngOnDestroyDefinition = node;
+        }
+      },
+      "MethodDefinition[key.name='ngOnDestroy'][kind='method'] CallExpression[callee.property.name='next']": (
+        node: es.CallExpression
+      ) => {
+        const entry = getEntry();
+        if (entry && entry.hasDecorator) {
+          entry.nextCallExpressions.push(node);
+        }
+      },
+      "MethodDefinition[key.name='ngOnDestroy'][kind='method'] CallExpression[callee.property.name='complete']": (
+        node: es.CallExpression
+      ) => {
+        const entry = getEntry();
+        if (entry && entry.hasDecorator) {
+          entry.completeCallExpressions.push(node);
+        }
+      },
     };
   },
 };
 
 export = rule;
-/*
-type Options = {
-  alias: string[];
-  checkDestroy: boolean;
-  checkDecorators: string[];
-};
-
-public applyWithProgram(
-  sourceFile: ts.SourceFile,
-  program: ts.Program
-): Lint.RuleFailure[] {
-  const failures: Lint.RuleFailure[] = [];
-  const {
-    ruleArguments: [options]
-  } = this.getOptions();
-  // If an alias is specified, check for the subject-based destroy only if
-  // it's explicitly configured. It's extremely unlikely a subject-based
-  // destroy mechanism will be used in conjunction with an alias.
-  const {
-    alias = [],
-    checkDestroy = alias.length === 0,
-    checkDecorators = ["Component"]
-  }: Options = options || {};
-
-  // find all classes with given decorators
-  const decoratorQuery = `/^(${checkDecorators.join("|")})$/`;
-  const classDeclarations = tsquery(
-    sourceFile,
-    `ClassDeclaration:has(Decorator[expression.expression.name=${decoratorQuery}])`
-  ) as ts.ClassDeclaration[];
-  classDeclarations.forEach(classDeclaration => {
-    failures.push(
-      ...this.checkClassDeclaration(
-        sourceFile,
-        program,
-        { alias, checkDestroy, checkDecorators },
-        classDeclaration
-      )
-    );
-  });
-
-  return failures;
-}
-
-/**
- * Checks a class for occurrences of .subscribe() and corresponding takeUntil() requirements
- * /
-private checkClassDeclaration(
-  sourceFile: ts.SourceFile,
-  program: ts.Program,
-  options: Options,
-  classDeclaration: ts.ClassDeclaration
-): Lint.RuleFailure[] {
-  const failures: Lint.RuleFailure[] = [];
-  const typeChecker = program.getTypeChecker();
-  const destroySubjectNamesBySubscribes = new Map<
-    ts.Identifier | ts.PrivateIdentifier,
-    Set<string>
-  >();
-
-  // find observable.subscribe() call expressions
-  const subscribePropertyAccessExpressions = tsquery(
-    classDeclaration,
-    `CallExpression > PropertyAccessExpression[name.name="subscribe"]`
-  ) as ts.PropertyAccessExpression[];
-
-  // check whether it is an observable and check the takeUntil is applied
-  subscribePropertyAccessExpressions.forEach(propertyAccessExpression => {
-    const type = typeChecker.getTypeAtLocation(
-      propertyAccessExpression.expression
-    );
-    if (couldBeType(type, "Observable")) {
-      failures.push(
-        ...this.checkSubscribe(
-          sourceFile,
-          options,
-          propertyAccessExpression,
-          name => {
-            let names = destroySubjectNamesBySubscribes.get(
-              propertyAccessExpression.name
-            );
-            if (!names) {
-              names = new Set<string>();
-              destroySubjectNamesBySubscribes.set(
-                propertyAccessExpression.name,
-                names
-              );
-            }
-            names.add(name);
-          }
-        )
-      );
-    }
-  });
-
-  // check the ngOnDestroyMethod
-  if (options.checkDestroy && destroySubjectNamesBySubscribes.size > 0) {
-    failures.push(
-      ...this.checkNgOnDestroy(
-        sourceFile,
-        classDeclaration,
-        destroySubjectNamesBySubscribes
-      )
-    );
-  }
-
-  return failures;
-}
-
-/**
- * Checks whether a .subscribe() is preceded by a .pipe(<...>, takeUntil(<...>))
- * /
-private checkSubscribe(
-  sourceFile: ts.SourceFile,
-  options: Options,
-  subscribe: ts.PropertyAccessExpression,
-  addDestroySubjectName: (name: string) => void
-): Lint.RuleFailure[] {
-  const failures: Lint.RuleFailure[] = [];
-  const subscribeContext = subscribe.expression;
-  let takeUntilFound = false;
-
-  // check whether subscribeContext.expression is <something>.pipe()
-  if (
-    tsutils.isCallExpression(subscribeContext) &&
-    tsutils.isPropertyAccessExpression(subscribeContext.expression) &&
-    subscribeContext.expression.name.text === "pipe"
-  ) {
-    const pipedOperators = subscribeContext.arguments;
-    pipedOperators.forEach(pipedOperator => {
-      if (tsutils.isCallExpression(pipedOperator)) {
-        const { found, name } = this.checkOperator(options, pipedOperator);
-        takeUntilFound = found;
-        if (name) {
-          addDestroySubjectName(name);
-        }
-      }
-    });
-  }
-
-  // add failure if there is no takeUntil() in the .pipe()
-  if (!takeUntilFound) {
-    failures.push(
-      new Lint.RuleFailure(
-        sourceFile,
-        subscribe.name.getStart(),
-        subscribe.name.getStart() + subscribe.name.getWidth(),
-        Rule.FAILURE_STRING_NO_TAKEUNTIL,
-        this.ruleName
-      )
-    );
-  }
-  return failures;
-}
-
-/**
- * Checks whether the operator given is takeUntil and uses an expected destroy subject name
- * /
-private checkOperator(
-  options: Options,
-  operator: ts.CallExpression
-): {
-  found: boolean;
-  name?: string;
-} {
-  if (!tsutils.isIdentifier(operator.expression)) {
-    return { found: false };
-  }
-  if (
-    operator.expression.text === "takeUntil" ||
-    options.alias.includes(operator.expression.text)
-  ) {
-    const [arg] = operator.arguments;
-    if (arg) {
-      if (ts.isPropertyAccessExpression(arg) && isThis(arg.expression)) {
-        return { found: true, name: arg.name.text };
-      } else if (arg && ts.isIdentifier(arg)) {
-        return { found: true, name: arg.text };
-      }
-    }
-    if (!options.checkDestroy) {
-      return { found: true };
-    }
-  }
-  return { found: false };
-}
-
-/**
- * Checks whether the class implements an ngOnDestroy method and invokes .next() and .complete() on the destroy subjects
- * /
-private checkNgOnDestroy(
-  sourceFile: ts.SourceFile,
-  classDeclaration: ts.ClassDeclaration,
-  destroySubjectNamesBySubscribes: Map<
-    ts.Identifier | ts.PrivateIdentifier,
-    Set<string>
-  >
-): Lint.RuleFailure[] {
-  const failures: Lint.RuleFailure[] = [];
-  const ngOnDestroyMethod = classDeclaration.members.find(
-    member => member.name && member.name.getText() === "ngOnDestroy"
-  );
-
-  // check whether the ngOnDestroy method is implemented
-  // and contains invocations of .next() and .complete() on destroy subjects
-  if (ngOnDestroyMethod) {
-    // If a subscription to a .pipe() has at least one takeUntil that has no
-    // failures, the subscribe call is fine. Callers should be able to use
-    // secondary takUntil operators. However, there must be at least one
-    // takeUntil operator that conforms to the pattern that this rule enforces.
-    const destroySubjectNames = new Set<string>();
-    destroySubjectNamesBySubscribes.forEach(names =>
-      names.forEach(name => destroySubjectNames.add(name))
-    );
-
-    const destroySubjectResultsByName = new Map<
-      string,
-      { failures: Lint.RuleFailure[]; report: boolean }
-    >();
-    destroySubjectNames.forEach(name => {
-      destroySubjectResultsByName.set(name, {
-        failures: [
-          ...this.checkDestroySubjectDeclaration(
-            sourceFile,
-            classDeclaration,
-            name
-          ),
-          ...this.checkDestroySubjectMethodInvocation(
-            sourceFile,
-            ngOnDestroyMethod,
-            name,
-            "next"
-          ),
-          ...this.checkDestroySubjectMethodInvocation(
-            sourceFile,
-            ngOnDestroyMethod,
-            name,
-            "complete"
-          )
-        ],
-        report: false
-      });
-    });
-
-    destroySubjectNamesBySubscribes.forEach(names => {
-      const report = [...names].every(
-        name => destroySubjectResultsByName.get(name).failures.length > 0
-      );
-      if (report) {
-        names.forEach(
-          name => (destroySubjectResultsByName.get(name).report = true)
-        );
-      }
-    });
-
-    destroySubjectResultsByName.forEach(result => {
-      if (result.report) {
-        failures.push(...result.failures);
-      }
-    });
-  } else {
-    failures.push(
-      new Lint.RuleFailure(
-        sourceFile,
-        classDeclaration.name.getStart(),
-        classDeclaration.name.getStart() + classDeclaration.name.getWidth(),
-        Rule.FAILURE_STRING_NO_DESTROY,
-        this.ruleName
-      )
-    );
-  }
-  return failures;
-}
-
-private checkDestroySubjectDeclaration(
-  sourceFile: ts.SourceFile,
-  classDeclaration: ts.ClassDeclaration,
-  destroySubjectName: string
-) {
-  const failures: Lint.RuleFailure[] = [];
-  const propertyDeclarations = tsquery(
-    classDeclaration,
-    `PropertyDeclaration[name.text="${destroySubjectName}"]`
-  ) as ts.PropertyDeclaration[];
-  if (propertyDeclarations.length === 0) {
-    const { name } = classDeclaration;
-    failures.push(
-      new Lint.RuleFailure(
-        sourceFile,
-        name.getStart(),
-        name.getStart() + name.getWidth(),
-        Rule.FAILURE_MESSAGE_NOT_DECLARED(destroySubjectName),
-        this.ruleName
-      )
-    );
-  }
-  return failures;
-}
-
-/**
- * Checks whether all <destroySubjectNameUsed>.<methodName>() are invoked in the ngOnDestroyMethod
- * /
-private checkDestroySubjectMethodInvocation(
-  sourceFile: ts.SourceFile,
-  ngOnDestroyMethod: ts.ClassElement,
-  destroySubjectName: string,
-  methodName: string
-) {
-  const failures: Lint.RuleFailure[] = [];
-  const destroySubjectMethodInvocations = tsquery(
-    ngOnDestroyMethod,
-    `CallExpression > PropertyAccessExpression[name.name="${methodName}"]`
-  ) as ts.PropertyAccessExpression[];
-  // check whether there is one invocation of <destroySubjectName>.<methodName>()
-  if (
-    !destroySubjectMethodInvocations.some(
-      methodInvocation =>
-        (tsutils.isPropertyAccessExpression(methodInvocation.expression) &&
-          isThis(methodInvocation.expression.expression) &&
-          methodInvocation.expression.name.text === destroySubjectName) ||
-        (tsutils.isIdentifier(methodInvocation.expression) &&
-          methodInvocation.expression.text === destroySubjectName)
-    )
-  ) {
-    failures.push(
-      new Lint.RuleFailure(
-        sourceFile,
-        ngOnDestroyMethod.name.getStart(),
-        ngOnDestroyMethod.name.getStart() + ngOnDestroyMethod.name.getWidth(),
-        Rule.FAILURE_MESSAGE_NOT_CALLED(destroySubjectName, methodName),
-        this.ruleName
-      )
-    );
-  }
-  return failures;
-}
-*/

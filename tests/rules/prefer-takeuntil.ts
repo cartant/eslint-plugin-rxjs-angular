@@ -7,11 +7,10 @@ import { stripIndent } from "common-tags";
 import rule = require("../../source/rules/prefer-takeuntil");
 import { ruleTester } from "../utils";
 
-describe.skip("skip", () => {
-  ruleTester({ types: true }).run("prefer-takeuntil", rule, {
-    valid: [
-      {
-        code: stripIndent`
+ruleTester({ types: true }).run("prefer-takeuntil", rule, {
+  valid: [
+    {
+      code: stripIndent`
         // correct component
         import { Component, OnDestroy } from "@angular/core";
         import { of, Subject } from "rxjs";
@@ -36,9 +35,9 @@ describe.skip("skip", () => {
           }
         }
       `,
-      },
-      {
-        code: stripIndent`
+    },
+    {
+      code: stripIndent`
         // destructured component
         import { Component, OnDestroy } from "@angular/core";
         import { of, Subject } from "rxjs";
@@ -65,9 +64,9 @@ describe.skip("skip", () => {
           }
         }
       `,
-      },
-      {
-        code: stripIndent`
+    },
+    {
+      code: stripIndent`
         // secondary takeuntil component
         import { Component, OnDestroy } from "@angular/core";
         import { of, Subject } from "rxjs";
@@ -93,9 +92,9 @@ describe.skip("skip", () => {
           }
         }
       `,
-      },
-      {
-        code: stripIndent`
+    },
+    {
+      code: stripIndent`
         // not components
         import { of } from "rxjs";
         import { switchMap, takeUntil } from "rxjs/operators";
@@ -145,9 +144,9 @@ describe.skip("skip", () => {
           }
         }
       `,
-      },
-      {
-        code: stripIndent`
+    },
+    {
+      code: stripIndent`
         // no destroy only takeuntil
         import { Component, OnDestroy } from "@angular/core";
         import { of, Subject } from "rxjs";
@@ -167,9 +166,10 @@ describe.skip("skip", () => {
           }
         }
       `,
-      },
-      {
-        code: stripIndent`
+      options: [{ checkDestroy: false }],
+    },
+    {
+      code: stripIndent`
         // with alias
         import { Component, OnDestroy } from "@angular/core";
         import { of, Subject } from "rxjs";
@@ -195,10 +195,10 @@ describe.skip("skip", () => {
           }
         }
       `,
-        options: [{ alias: ["someAlias"] }],
-      },
-      {
-        code: stripIndent`
+      options: [{ alias: ["someAlias"] }],
+    },
+    {
+      code: stripIndent`
         // decorators with takeuntil
         import { Component, OnDestroy } from "@angular/core";
         import { of, Subject } from "rxjs";
@@ -228,7 +228,7 @@ describe.skip("skip", () => {
           private destroy = new Subject<void>();
           someMethod() {
             o.pipe(
-              switchMap(_ => o)
+              switchMap(_ => o),
               takeUntil(this.destroy)
             ).subscribe();
           }
@@ -245,7 +245,7 @@ describe.skip("skip", () => {
           private destroy = new Subject<void>();
           someMethod() {
             o.pipe(
-              switchMap(_ => o)
+              switchMap(_ => o),
               takeUntil(this.destroy)
             ).subscribe();
           }
@@ -262,7 +262,7 @@ describe.skip("skip", () => {
           private destroy = new Subject<void>();
           someMethod() {
             o.pipe(
-              switchMap(_ => o)
+              switchMap(_ => o),
               takeUntil(this.destroy)
             ).subscribe();
           }
@@ -272,14 +272,14 @@ describe.skip("skip", () => {
           }
         }
       `,
-        options: [
-          {
-            checkDecorators: ["Component", "Pipe", "Injectable", "Directive"],
-          },
-        ],
-      },
-      {
-        code: stripIndent`
+      options: [
+        {
+          checkDecorators: ["Component", "Pipe", "Injectable", "Directive"],
+        },
+      ],
+    },
+    {
+      code: stripIndent`
         // https://github.com/cartant/rxjs-tslint-rules/issues/115
         import { Component } from "@angular/core";
         import { of, Subject } from "rxjs";
@@ -305,17 +305,17 @@ describe.skip("skip", () => {
           }
         }
       `,
-        options: [
-          {
-            alias: ["someAlias"],
-            checkDestroy: false,
-          },
-        ],
-      },
-    ],
-    invalid: [
-      {
-        code: stripIndent`
+      options: [
+        {
+          alias: ["someAlias"],
+          checkDestroy: false,
+        },
+      ],
+    },
+  ],
+  invalid: [
+    {
+      code: stripIndent`
         // no takeuntil component
         import { Component, OnDestroy } from "@angular/core";
         import { of, Subject } from "rxjs";
@@ -340,18 +340,19 @@ describe.skip("skip", () => {
           }
         }
       `,
-        errors: [
-          {
-            messageId: "forbidden",
-            line: 17,
-            column: 7,
-            endLine: 17,
-            endColumn: 16,
-          },
-        ],
-      },
-      {
-        code: stripIndent`
+      errors: [
+        {
+          messageId: "noTakeUntil",
+          line: 17,
+          column: 7,
+          endLine: 17,
+          endColumn: 16,
+        },
+      ],
+      options: [{ checkComplete: true }],
+    },
+    {
+      code: stripIndent`
         // no subject component
         import { Component, OnDestroy } from "@angular/core";
         import { of, Subject } from "rxjs";
@@ -364,7 +365,6 @@ describe.skip("skip", () => {
         })
         class NoSubjectComponent implements OnDestroy {
           someMethod() {
-            const { destroy } = this;
             o.pipe(
               switchMap(_ => o),
               takeUntil(o)
@@ -374,32 +374,33 @@ describe.skip("skip", () => {
           }
         }
       `,
-        errors: [
-          {
-            messageId: "forbidden",
-            line: 11,
-            column: 7,
-            endLine: 11,
-            endColumn: 25,
-          },
-          {
-            messageId: "forbidden",
-            line: 19,
-            column: 3,
-            endLine: 19,
-            endColumn: 14,
-          },
-          {
-            messageId: "forbidden",
-            line: 19,
-            column: 3,
-            endLine: 19,
-            endColumn: 14,
-          },
-        ],
-      },
-      {
-        code: stripIndent`
+      errors: [
+        {
+          messageId: "notDeclared",
+          line: 11,
+          column: 7,
+          endLine: 11,
+          endColumn: 25,
+        },
+        {
+          messageId: "notCalled",
+          line: 18,
+          column: 3,
+          endLine: 18,
+          endColumn: 14,
+        },
+        {
+          messageId: "notCalled",
+          line: 18,
+          column: 3,
+          endLine: 18,
+          endColumn: 14,
+        },
+      ],
+      options: [{ checkComplete: true }],
+    },
+    {
+      code: stripIndent`
         // no destroy component
         import { Component, OnDestroy } from "@angular/core";
         import { of, Subject } from "rxjs";
@@ -421,18 +422,19 @@ describe.skip("skip", () => {
           }
         }
       `,
-        errors: [
-          {
-            messageId: "forbidden",
-            line: 11,
-            column: 7,
-            endLine: 11,
-            endColumn: 25,
-          },
-        ],
-      },
-      {
-        code: stripIndent`
+      errors: [
+        {
+          messageId: "noDestroy",
+          line: 11,
+          column: 7,
+          endLine: 11,
+          endColumn: 25,
+        },
+      ],
+      options: [{ checkComplete: true }],
+    },
+    {
+      code: stripIndent`
         // no next component
         import { Component, OnDestroy } from "@angular/core";
         import { of, Subject } from "rxjs";
@@ -456,18 +458,19 @@ describe.skip("skip", () => {
           }
         }
       `,
-        errors: [
-          {
-            messageId: "forbidden",
-            line: 19,
-            column: 3,
-            endLine: 19,
-            endColumn: 14,
-          },
-        ],
-      },
-      {
-        code: stripIndent`
+      errors: [
+        {
+          messageId: "notCalled",
+          line: 19,
+          column: 3,
+          endLine: 19,
+          endColumn: 14,
+        },
+      ],
+      options: [{ checkComplete: true }],
+    },
+    {
+      code: stripIndent`
         // no complete component
         import { Component, OnDestroy } from "@angular/core";
         import { of, Subject } from "rxjs";
@@ -491,18 +494,19 @@ describe.skip("skip", () => {
           }
         }
       `,
-        errors: [
-          {
-            messageId: "forbidden",
-            line: 19,
-            column: 3,
-            endLine: 19,
-            endColumn: 14,
-          },
-        ],
-      },
-      {
-        code: stripIndent`
+      errors: [
+        {
+          messageId: "notCalled",
+          line: 19,
+          column: 3,
+          endLine: 19,
+          endColumn: 14,
+        },
+      ],
+      options: [{ checkComplete: true }],
+    },
+    {
+      code: stripIndent`
         // no destroy and no takeuntil component
         import { Component, OnDestroy } from "@angular/core";
         import { of, Subject } from "rxjs";
@@ -521,18 +525,26 @@ describe.skip("skip", () => {
           }
         }
       `,
-        errors: [
-          {
-            messageId: "forbidden",
-            line: 15,
-            column: 7,
-            endLine: 15,
-            endColumn: 16,
-          },
-        ],
-      },
-      {
-        code: stripIndent`
+      errors: [
+        {
+          messageId: "noDestroy",
+          line: 11,
+          column: 7,
+          endLine: 11,
+          endColumn: 27,
+        },
+        {
+          messageId: "noTakeUntil",
+          line: 15,
+          column: 7,
+          endLine: 15,
+          endColumn: 16,
+        },
+      ],
+      options: [{ checkComplete: true }],
+    },
+    {
+      code: stripIndent`
         // without alias
         import { Component, OnDestroy } from "@angular/core";
         import { of, Subject } from "rxjs";
@@ -557,19 +569,19 @@ describe.skip("skip", () => {
           }
         }
       `,
-        errors: [
-          {
-            messageId: "forbidden",
-            line: 17,
-            column: 7,
-            endLine: 17,
-            endColumn: 16,
-          },
-        ],
-        options: [{ alias: ["someAlias"] }],
-      },
-      {
-        code: stripIndent`
+      errors: [
+        {
+          messageId: "noTakeUntil",
+          line: 17,
+          column: 7,
+          endLine: 17,
+          endColumn: 16,
+        },
+      ],
+      options: [{ alias: ["someAlias"] }],
+    },
+    {
+      code: stripIndent`
         // decorators without takeuntil
         import { Component, OnDestroy } from "@angular/core";
         import { of, Subject } from "rxjs";
@@ -619,42 +631,69 @@ describe.skip("skip", () => {
           }
         }
       `,
-        errors: [
-          {
-            messageId: "forbidden",
-            line: 15,
-            column: 7,
-            endLine: 15,
-            endColumn: 16,
-          },
-          {
-            messageId: "forbidden",
-            line: 24,
-            column: 7,
-            endLine: 24,
-            endColumn: 16,
-          },
-          {
-            messageId: "forbidden",
-            line: 35,
-            column: 7,
-            endLine: 35,
-            endColumn: 16,
-          },
-          {
-            messageId: "forbidden",
-            line: 46,
-            column: 7,
-            endLine: 46,
-            endColumn: 16,
-          },
-        ],
-        options: [
-          {
-            checkDecorators: ["Component", "Pipe", "Injectable", "Directive"],
-          },
-        ],
-      },
-    ],
-  });
+      errors: [
+        {
+          messageId: "noDestroy",
+          line: 11,
+          column: 7,
+          endLine: 11,
+          endColumn: 27,
+        },
+        {
+          messageId: "noTakeUntil",
+          line: 15,
+          column: 7,
+          endLine: 15,
+          endColumn: 16,
+        },
+        {
+          messageId: "noDestroy",
+          line: 20,
+          column: 7,
+          endLine: 20,
+          endColumn: 25,
+        },
+        {
+          messageId: "noTakeUntil",
+          line: 24,
+          column: 7,
+          endLine: 24,
+          endColumn: 16,
+        },
+        {
+          messageId: "noDestroy",
+          line: 31,
+          column: 7,
+          endLine: 31,
+          endColumn: 22,
+        },
+        {
+          messageId: "noTakeUntil",
+          line: 35,
+          column: 7,
+          endLine: 35,
+          endColumn: 16,
+        },
+        {
+          messageId: "noDestroy",
+          line: 42,
+          column: 7,
+          endLine: 42,
+          endColumn: 27,
+        },
+        {
+          messageId: "noTakeUntil",
+          line: 46,
+          column: 7,
+          endLine: 46,
+          endColumn: 16,
+        },
+      ],
+      options: [
+        {
+          checkDecorators: ["Component", "Pipe", "Injectable", "Directive"],
+        },
+      ],
+    },
+  ],
 });
