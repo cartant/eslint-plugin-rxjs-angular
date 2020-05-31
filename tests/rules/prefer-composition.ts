@@ -121,18 +121,18 @@ ruleTester({ types: true }).run("prefer-composition", rule, {
       `,
       errors: [
         {
-          messageId: "forbidden",
+          messageId: "notComposed",
           line: 12,
           column: 15,
           endLine: 12,
           endColumn: 24,
         },
         {
-          messageId: "forbidden",
+          messageId: "notComposed",
           line: 13,
-          column: 39,
+          column: 36,
           endLine: 13,
-          endColumn: 48,
+          endColumn: 45,
         },
       ],
     },
@@ -158,7 +158,7 @@ ruleTester({ types: true }).run("prefer-composition", rule, {
       `,
       errors: [
         {
-          messageId: "forbidden",
+          messageId: "notUnsubscribed",
           line: 11,
           column: 11,
           endLine: 11,
@@ -186,11 +186,42 @@ ruleTester({ types: true }).run("prefer-composition", rule, {
       `,
       errors: [
         {
-          messageId: "forbidden",
+          messageId: "notImplemented",
           line: 9,
           column: 14,
           endLine: 9,
           endColumn: 35,
+        },
+      ],
+    },
+    {
+      code: stripIndent`
+        // not declared
+        import { Component, OnDestroy, OnInit } from "@angular/core";
+        import { of, Subscription } from "rxjs";
+
+        @Component({
+          selector: "not-declared-component",
+          template: "<span>{{ value }}</span>"
+        })
+        export class NotDeclaredComponent implements OnInit {
+          value: string;
+          ngOnInit() {
+            const subscription = new Subscription();
+            subscription.add(of("foo").subscribe(value => this.value = value));
+          }
+          ngOnDestroy() {
+          }
+        }
+      `,
+      errors: [
+        {
+          data: { name: "subscription" },
+          messageId: "notDeclared",
+          line: 9,
+          column: 14,
+          endLine: 9,
+          endColumn: 34,
         },
       ],
     },

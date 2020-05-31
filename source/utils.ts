@@ -101,7 +101,8 @@ export function typecheck(context: Rule.RuleContext) {
     couldBeMonoTypeOperatorFunction: (node: es.Node) =>
       couldBeType(node, "MonoTypeOperatorFunction"),
     isAny: (node: es.Node) => tsutils.isAny(getTSType(node)),
-    isReferenceType: (node: es.Node) => tsutils.isReferenceType(getTSType(node))
+    isReferenceType: (node: es.Node) =>
+      tsutils.isReferenceType(getTSType(node)),
   };
 }
 
@@ -149,4 +150,16 @@ export function isFunctionExpression(
   node: es.Node
 ): node is es.FunctionExpression {
   return node.type === "FunctionExpression";
+}
+
+export function isVariableDeclarator(
+  node: es.Node
+): node is es.VariableDeclarator {
+  return node.type === "VariableDeclarator";
+}
+
+export function isAssignmentExpression(
+  node: es.Node
+): node is es.AssignmentExpression {
+  return node.type === "AssignmentExpression";
 }
