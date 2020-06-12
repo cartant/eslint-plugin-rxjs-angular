@@ -4,6 +4,7 @@
  */
 
 import { stripIndent } from "common-tags";
+import { fromFixture } from "eslint-etc";
 import rule = require("../../source/rules/prefer-composition");
 import { ruleTester } from "../utils";
 
@@ -99,8 +100,8 @@ ruleTester({ types: true }).run("prefer-composition", rule, {
     },
   ],
   invalid: [
-    {
-      code: stripIndent`
+    fromFixture(
+      stripIndent`
         // not composed component
         import { Component, OnDestroy, OnInit } from "@angular/core";
         import { of, Subscription } from "rxjs";
@@ -113,31 +114,17 @@ ruleTester({ types: true }).run("prefer-composition", rule, {
           value: string;
           ngOnInit() {
             of("foo").subscribe(value => this.value = value);
+                      ~~~~~~~~~ [notComposed]
             const subscription = of("bar").subscribe(value => this.value = value);
+                                           ~~~~~~~~~ [notComposed]
           }
           ngOnDestroy() {
           }
         }
-      `,
-      errors: [
-        {
-          messageId: "notComposed",
-          line: 12,
-          column: 15,
-          endLine: 12,
-          endColumn: 24,
-        },
-        {
-          messageId: "notComposed",
-          line: 13,
-          column: 36,
-          endLine: 13,
-          endColumn: 45,
-        },
-      ],
-    },
-    {
-      code: stripIndent`
+      `
+    ),
+    fromFixture(
+      stripIndent`
         // not unsubscribed component
         import { Component, OnDestroy, OnInit } from "@angular/core";
         import { of, Subscription } from "rxjs";
@@ -149,25 +136,17 @@ ruleTester({ types: true }).run("prefer-composition", rule, {
         export class NotUnsubscribedComponent implements OnInit, OnDestroy {
           value: string;
           private subscription = new Subscription();
+                  ~~~~~~~~~~~~ [notUnsubscribed]
           ngOnInit() {
             this.subscription.add(of("foo").subscribe(value => this.value = value));
           }
           ngOnDestroy() {
           }
         }
-      `,
-      errors: [
-        {
-          messageId: "notUnsubscribed",
-          line: 11,
-          column: 11,
-          endLine: 11,
-          endColumn: 23,
-        },
-      ],
-    },
-    {
-      code: stripIndent`
+      `
+    ),
+    fromFixture(
+      stripIndent`
         // not destroyed component
         import { Component, OnDestroy, OnInit } from "@angular/core";
         import { of, Subscription } from "rxjs";
@@ -177,25 +156,17 @@ ruleTester({ types: true }).run("prefer-composition", rule, {
           template: "<span>{{ value }}</span>"
         })
         export class NotDestroyedComponent implements OnInit {
+                     ~~~~~~~~~~~~~~~~~~~~~ [notImplemented]
           value: string;
           private subscription = new Subscription();
           ngOnInit() {
             this.subscription.add(of("foo").subscribe(value => this.value = value));
           }
         }
-      `,
-      errors: [
-        {
-          messageId: "notImplemented",
-          line: 9,
-          column: 14,
-          endLine: 9,
-          endColumn: 35,
-        },
-      ],
-    },
-    {
-      code: stripIndent`
+      `
+    ),
+    fromFixture(
+      stripIndent`
         // not declared
         import { Component, OnDestroy, OnInit } from "@angular/core";
         import { of, Subscription } from "rxjs";
@@ -205,6 +176,7 @@ ruleTester({ types: true }).run("prefer-composition", rule, {
           template: "<span>{{ value }}</span>"
         })
         export class NotDeclaredComponent implements OnInit {
+                     ~~~~~~~~~~~~~~~~~~~~ [notDeclared]
           value: string;
           ngOnInit() {
             const subscription = new Subscription();
@@ -213,17 +185,7 @@ ruleTester({ types: true }).run("prefer-composition", rule, {
           ngOnDestroy() {
           }
         }
-      `,
-      errors: [
-        {
-          data: { name: "subscription" },
-          messageId: "notDeclared",
-          line: 9,
-          column: 14,
-          endLine: 9,
-          endColumn: 34,
-        },
-      ],
-    },
+      `
+    ),
   ],
 });

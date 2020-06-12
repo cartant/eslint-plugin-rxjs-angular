@@ -632,10 +632,10 @@ escape-string-regexp@1.0.5, escape-string-regexp@^1.0.5:
   resolved "https://registry.yarnpkg.com/escape-string-regexp/-/escape-string-regexp-1.0.5.tgz#1b61c0562190a8dff6ae3bb2cf0200ca130b86d4"
   integrity sha1-G2HAViGQqN/2rjuyzwIAyhMLhtQ=
 
-eslint-etc@^0.0.16:
-  version "0.0.16"
-  resolved "https://registry.yarnpkg.com/eslint-etc/-/eslint-etc-0.0.16.tgz#de0d7da2aabfbc742ab6cc28834ac746908bdf7b"
-  integrity sha512-LPC4keBXRq3V/28eDEAOwkbh0DOYi7VlSCARvnr5EsOlnGt+winfGbOsuiJgVeuUYZPd+0WK+jwjNqnnmaU49Q==
+eslint-etc@^0.0.17:
+  version "0.0.17"
+  resolved "https://registry.yarnpkg.com/eslint-etc/-/eslint-etc-0.0.17.tgz#9f9bd7aba5e7dcde9982d529b30dbc0df19cdec7"
+  integrity sha512-XgsUWpxhYmdy9OJt82Wky8wmOtTYU1ed37z1KKVCRGZHzrbg2dCcFf/DOJAsk5kx3KqawPJ7hdKBS55qpHTeBQ==
 
 eslint-import-resolver-node@^0.3.3:
   version "0.3.3"

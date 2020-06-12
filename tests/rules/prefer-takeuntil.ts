@@ -4,6 +4,7 @@
  */
 
 import { stripIndent } from "common-tags";
+import { fromFixture } from "eslint-etc";
 import rule = require("../../source/rules/prefer-takeuntil");
 import { ruleTester } from "../utils";
 
@@ -314,8 +315,8 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
     },
   ],
   invalid: [
-    {
-      code: stripIndent`
+    fromFixture(
+      stripIndent`
         // no takeuntil component
         import { Component, OnDestroy } from "@angular/core";
         import { of, Subject } from "rxjs";
@@ -333,6 +334,7 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
             o.pipe(
               switchMap(_ => o)
             ).subscribe();
+              ~~~~~~~~~ [noTakeUntil]
           }
           ngOnDestroy() {
             this.destroy.next();
@@ -340,19 +342,11 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
           }
         }
       `,
-      errors: [
-        {
-          messageId: "noTakeUntil",
-          line: 17,
-          column: 7,
-          endLine: 17,
-          endColumn: 16,
-        },
-      ],
-      options: [{ checkComplete: true }],
-    },
-    {
-      code: stripIndent`
+      {},
+      { options: [{ checkComplete: true }] }
+    ),
+    fromFixture(
+      stripIndent`
         // no subject component
         import { Component, OnDestroy } from "@angular/core";
         import { of, Subject } from "rxjs";
@@ -364,6 +358,7 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
           selector: "no-subject-component"
         })
         class NoSubjectComponent implements OnDestroy {
+              ~~~~~~~~~~~~~~~~~~ [notDeclared]
           someMethod() {
             o.pipe(
               switchMap(_ => o),
@@ -371,36 +366,16 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
             ).subscribe();
           }
           ngOnDestroy() {
+          ~~~~~~~~~~~ [notCalled]
+          ~~~~~~~~~~~ [notCalled]
           }
         }
       `,
-      errors: [
-        {
-          messageId: "notDeclared",
-          line: 11,
-          column: 7,
-          endLine: 11,
-          endColumn: 25,
-        },
-        {
-          messageId: "notCalled",
-          line: 18,
-          column: 3,
-          endLine: 18,
-          endColumn: 14,
-        },
-        {
-          messageId: "notCalled",
-          line: 18,
-          column: 3,
-          endLine: 18,
-          endColumn: 14,
-        },
-      ],
-      options: [{ checkComplete: true }],
-    },
-    {
-      code: stripIndent`
+      {},
+      { options: [{ checkComplete: true }] }
+    ),
+    fromFixture(
+      stripIndent`
         // no destroy component
         import { Component, OnDestroy } from "@angular/core";
         import { of, Subject } from "rxjs";
@@ -412,6 +387,7 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
           selector: "no-destroy-component"
         })
         class NoDestroyComponent {
+              ~~~~~~~~~~~~~~~~~~ [noDestroy]
           private destroy = new Subject<void>();
           someMethod() {
             const { destroy } = this;
@@ -422,19 +398,11 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
           }
         }
       `,
-      errors: [
-        {
-          messageId: "noDestroy",
-          line: 11,
-          column: 7,
-          endLine: 11,
-          endColumn: 25,
-        },
-      ],
-      options: [{ checkComplete: true }],
-    },
-    {
-      code: stripIndent`
+      {},
+      { options: [{ checkComplete: true }] }
+    ),
+    fromFixture(
+      stripIndent`
         // no next component
         import { Component, OnDestroy } from "@angular/core";
         import { of, Subject } from "rxjs";
@@ -454,23 +422,16 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
             ).subscribe();
           }
           ngOnDestroy() {
+          ~~~~~~~~~~~ [notCalled]
             this.destroy.complete();
           }
         }
       `,
-      errors: [
-        {
-          messageId: "notCalled",
-          line: 19,
-          column: 3,
-          endLine: 19,
-          endColumn: 14,
-        },
-      ],
-      options: [{ checkComplete: true }],
-    },
-    {
-      code: stripIndent`
+      {},
+      { options: [{ checkComplete: true }] }
+    ),
+    fromFixture(
+      stripIndent`
         // no complete component
         import { Component, OnDestroy } from "@angular/core";
         import { of, Subject } from "rxjs";
@@ -490,23 +451,16 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
             ).subscribe();
           }
           ngOnDestroy() {
+          ~~~~~~~~~~~ [notCalled]
             this.destroy.next();
           }
         }
       `,
-      errors: [
-        {
-          messageId: "notCalled",
-          line: 19,
-          column: 3,
-          endLine: 19,
-          endColumn: 14,
-        },
-      ],
-      options: [{ checkComplete: true }],
-    },
-    {
-      code: stripIndent`
+      {},
+      { options: [{ checkComplete: true }] }
+    ),
+    fromFixture(
+      stripIndent`
         // no destroy and no takeuntil component
         import { Component, OnDestroy } from "@angular/core";
         import { of, Subject } from "rxjs";
@@ -518,33 +472,20 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
           selector: "no-takeuntil-component"
         })
         class NoTakeUntilComponent {
+              ~~~~~~~~~~~~~~~~~~~~ [noDestroy]
           someMethod() {
             o.pipe(
               switchMap(_ => o)
             ).subscribe();
+              ~~~~~~~~~ [noTakeUntil]
           }
         }
       `,
-      errors: [
-        {
-          messageId: "noDestroy",
-          line: 11,
-          column: 7,
-          endLine: 11,
-          endColumn: 27,
-        },
-        {
-          messageId: "noTakeUntil",
-          line: 15,
-          column: 7,
-          endLine: 15,
-          endColumn: 16,
-        },
-      ],
-      options: [{ checkComplete: true }],
-    },
-    {
-      code: stripIndent`
+      {},
+      { options: [{ checkComplete: true }] }
+    ),
+    fromFixture(
+      stripIndent`
         // without alias
         import { Component, OnDestroy } from "@angular/core";
         import { of, Subject } from "rxjs";
@@ -562,6 +503,7 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
             o.pipe(
               switchMap(_ => o)
             ).subscribe();
+              ~~~~~~~~~ [noTakeUntil]
           }
           ngOnDestroy() {
             this.destroy.next();
@@ -569,19 +511,11 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
           }
         }
       `,
-      errors: [
-        {
-          messageId: "noTakeUntil",
-          line: 17,
-          column: 7,
-          endLine: 17,
-          endColumn: 16,
-        },
-      ],
-      options: [{ alias: ["someAlias"] }],
-    },
-    {
-      code: stripIndent`
+      {},
+      { options: [{ alias: ["someAlias"] }] }
+    ),
+    fromFixture(
+      stripIndent`
         // decorators without takeuntil
         import { Component, OnDestroy } from "@angular/core";
         import { of, Subject } from "rxjs";
@@ -593,19 +527,23 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
           selector: "no-next-component"
         })
         class NoTakeUntilComponent {
+              ~~~~~~~~~~~~~~~~~~~~ [noDestroy]
           someMethod() {
             o.pipe(
               switchMap(_ => o)
             ).subscribe();
+              ~~~~~~~~~ [noTakeUntil]
           }
         }
 
         @Injectable()
         class NoTakeUntilService {
+              ~~~~~~~~~~~~~~~~~~ [noDestroy]
           someMethod() {
             o.pipe(
               switchMap(_ => o)
             ).subscribe();
+              ~~~~~~~~~ [noTakeUntil]
           }
         }
 
@@ -613,10 +551,12 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
           name: 'controlByName',
         })
         class NoTakeUntilPipe {
+              ~~~~~~~~~~~~~~~ [noDestroy]
           someMethod() {
             o.pipe(
               switchMap(_ => o)
             ).subscribe();
+              ~~~~~~~~~ [noTakeUntil]
           }
         }
 
@@ -624,76 +564,23 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
           selector: 'my-directive'
         })
         class NoTakeUntilDirective {
+              ~~~~~~~~~~~~~~~~~~~~ [noDestroy]
           someMethod() {
             o.pipe(
               switchMap(_ => o)
             ).subscribe();
+              ~~~~~~~~~ [noTakeUntil]
           }
         }
       `,
-      errors: [
-        {
-          messageId: "noDestroy",
-          line: 11,
-          column: 7,
-          endLine: 11,
-          endColumn: 27,
-        },
-        {
-          messageId: "noTakeUntil",
-          line: 15,
-          column: 7,
-          endLine: 15,
-          endColumn: 16,
-        },
-        {
-          messageId: "noDestroy",
-          line: 20,
-          column: 7,
-          endLine: 20,
-          endColumn: 25,
-        },
-        {
-          messageId: "noTakeUntil",
-          line: 24,
-          column: 7,
-          endLine: 24,
-          endColumn: 16,
-        },
-        {
-          messageId: "noDestroy",
-          line: 31,
-          column: 7,
-          endLine: 31,
-          endColumn: 22,
-        },
-        {
-          messageId: "noTakeUntil",
-          line: 35,
-          column: 7,
-          endLine: 35,
-          endColumn: 16,
-        },
-        {
-          messageId: "noDestroy",
-          line: 42,
-          column: 7,
-          endLine: 42,
-          endColumn: 27,
-        },
-        {
-          messageId: "noTakeUntil",
-          line: 46,
-          column: 7,
-          endLine: 46,
-          endColumn: 16,
-        },
-      ],
-      options: [
-        {
-          checkDecorators: ["Component", "Pipe", "Injectable", "Directive"],
-        },
-      ],
-    },
+      {},
+      {
+        options: [
+          {
+            checkDecorators: ["Component", "Pipe", "Injectable", "Directive"],
+          },
+        ],
+      }
+    ),
   ],
 });
