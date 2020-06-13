@@ -57,7 +57,7 @@ const rule = ruleCreator({
     type Entry = {
       addCallExpressions: es.CallExpression[];
       classDeclaration: es.ClassDeclaration;
-      classProperties: es.Node[];
+      classProperties: es.ClassProperty[];
       hasDecorator: boolean;
       ngOnDestroyDefinition?: es.MethodDefinition;
       subscribeCallExpressions: es.CallExpression[];
@@ -127,7 +127,7 @@ const rule = ruleCreator({
           context.report({
             data: { name: subscription },
             messageId: "notUnsubscribed",
-            node: (classProperty as any).key,
+            node: classProperty.key,
           });
           return;
         }
