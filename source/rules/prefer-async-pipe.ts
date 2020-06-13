@@ -21,7 +21,7 @@ const rule = ruleCreator({
       forbidden:
         "Calling `subscribe` in a component is forbidden; use an `async` pipe instead.",
     },
-    schema: {},
+    schema: null,
     type: "problem",
   },
   name: "prefer-async-pipe",
