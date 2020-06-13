@@ -17,7 +17,7 @@ import * as tsutils from "tsutils-etc";
 import * as ts from "typescript";
 
 export const ruleCreator = ESLintUtils.RuleCreator(
-  (name) => "https://github/cartant/eslint-plugin-etc"
+  (name) => "https://github/cartant/eslint-plugin-rxjs-angular"
 );
 
 export function typecheck<
