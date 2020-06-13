@@ -3,33 +3,46 @@
  * can be found in the LICENSE file at https://github.com/cartant/eslint-plugin-rxjs-angular
  */
 
+import {
+  TSESLint,
+  TSESTree as es,
+} from "@typescript-eslint/experimental-utils";
 import { stripIndent } from "common-tags";
-import { Rule } from "eslint";
-import * as es from "estree";
 import {
   isCallExpression,
   isIdentifier,
   isMemberExpression,
   isThisExpression,
-  typecheck,
-} from "../utils";
+} from "eslint-etc";
+import { ruleCreator, typecheck } from "../utils";
 
-const rule: Rule.RuleModule = {
+const messages = {
+  noDestroy: "`ngOnDestroy` is not implemented.",
+  noTakeUntil:
+    "Calling `subscribe` without an accompanying `takeUntil` is forbidden.",
+  notCalled: "`{{name}}.{{method}}()` not called.",
+  notDeclared: "Subject `{{name}}` not a class property.",
+} as const;
+type MessageIds = keyof typeof messages;
+
+const defaultOptions: {
+  alias?: string[];
+  checkComplete?: boolean;
+  checkDecorators?: string[];
+  checkDestroy?: boolean;
+}[] = [];
+
+const rule = ruleCreator({
+  defaultOptions,
   meta: {
     docs: {
-      category: "RxJS",
+      category: "Best Practices",
       description:
         "Forbids `subscribe` calls without an accompanying `takeUntil` within Angular components (and, optionally, within services, directives, and pipes).",
       recommended: false,
     },
     fixable: null,
-    messages: {
-      noDestroy: "`ngOnDestroy` is not implemented.",
-      noTakeUntil:
-        "Calling `subscribe` without an accompanying `takeUntil` is forbidden.",
-      notCalled: "`{{name}}.{{method}}()` not called.",
-      notDeclared: "Subject `{{name}}` not a class property.",
-    },
+    messages,
     schema: [
       {
         properties: {
@@ -40,16 +53,18 @@ const rule: Rule.RuleModule = {
         },
         type: "object",
         description: stripIndent`
-          An optional object with optional \`alias\`, \`checkComplete\`, \`checkDecorators\` and \`checkDestroy\` properties.
-          The \`alias\` property is an array containing the names of operators that aliases for \`takeUntil\`.
-          The \`checkComplete\` property is a boolean that determines whether or not \`complete\` must be called after \`next\`.
-          The \`checkDecorators\` property is an array containing the names of the decorators that determine whether or not a class is checked.
-          The \`checkDestroy\` property is a boolean that determines whether or not a \`Subject\`-based \`ngOnDestroy\` must be implemented.
-        `,
+        An optional object with optional \`alias\`, \`checkComplete\`, \`checkDecorators\` and \`checkDestroy\` properties.
+        The \`alias\` property is an array containing the names of operators that aliases for \`takeUntil\`.
+        The \`checkComplete\` property is a boolean that determines whether or not \`complete\` must be called after \`next\`.
+        The \`checkDecorators\` property is an array containing the names of the decorators that determine whether or not a class is checked.
+        The \`checkDestroy\` property is a boolean that determines whether or not a \`Subject\`-based \`ngOnDestroy\` must be implemented.
+      `,
       },
     ],
+    type: "problem",
   },
-  create: (context) => {
+  name: "prefer-takeuntil",
+  create: (context, unused: typeof defaultOptions) => {
     const { couldBeObservable } = typecheck(context);
 
     // If an alias is specified, check for the subject-based destroy only if
@@ -122,7 +137,7 @@ const rule: Rule.RuleModule = {
       // enforces.
 
       type Check = {
-        descriptors: Rule.ReportDescriptor[];
+        descriptors: TSESLint.ReportDescriptor<MessageIds>[];
         report: boolean;
       };
       const namesToChecks = new Map<string, Check>();
@@ -349,6 +364,6 @@ const rule: Rule.RuleModule = {
       },
     };
   },
-};
+});
 
 export = rule;

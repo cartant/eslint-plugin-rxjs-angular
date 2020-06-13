@@ -3,9 +3,8 @@
  * can be found in the LICENSE file at https://github.com/cartant/eslint-plugin-rxjs-angular
  */
 
+import { TSESTree as es } from "@typescript-eslint/experimental-utils";
 import { stripIndent } from "common-tags";
-import { Rule } from "eslint";
-import * as es from "estree";
 import {
   getParent,
   isAssignmentExpression,
@@ -13,13 +12,18 @@ import {
   isIdentifier,
   isMemberExpression,
   isVariableDeclarator,
-  typecheck,
-} from "../utils";
+} from "eslint-etc";
+import { ruleCreator, typecheck } from "../utils";
 
-const rule: Rule.RuleModule = {
+const defaultOptions: {
+  checkDecorators?: string[];
+}[] = [];
+
+const rule = ruleCreator({
+  defaultOptions,
   meta: {
     docs: {
-      category: "RxJS",
+      category: "Best Practices",
       description:
         "Forbids `subscribe` calls that are not composed within Angular components (and, optionally, within services, directives, and pipes).",
       recommended: false,
@@ -38,16 +42,17 @@ const rule: Rule.RuleModule = {
         },
         type: "object",
         description: stripIndent`
-          An optional object with an optional \`checkDecorators\` property.
-          The \`checkDecorators\` property is an array containing the names of the decorators that determine whether or not a class is checked.
-        `,
+        An optional object with an optional \`checkDecorators\` property.
+        The \`checkDecorators\` property is an array containing the names of the decorators that determine whether or not a class is checked.
+      `,
       },
     ],
+    type: "problem",
   },
-  create: (context) => {
+  name: "prefer-composition",
+  create: (context, unused: typeof defaultOptions) => {
     const { couldBeObservable, couldBeSubscription } = typecheck(context);
-    const [config = {}] = context.options;
-    const { checkDecorators = ["Component"] } = config;
+    const [{ checkDecorators = ["Component"] } = {}] = context.options;
 
     type Entry = {
       addCallExpressions: es.CallExpression[];
@@ -288,6 +293,6 @@ const rule: Rule.RuleModule = {
       },
     };
   },
-};
+});
 
 export = rule;
