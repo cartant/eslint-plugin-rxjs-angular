@@ -7,13 +7,14 @@ import { TSESTree as es } from "@typescript-eslint/experimental-utils";
 import { stripIndent } from "common-tags";
 import {
   getParent,
+  getTypeServices,
   isAssignmentExpression,
   isCallExpression,
   isIdentifier,
   isMemberExpression,
   isVariableDeclarator,
 } from "eslint-etc";
-import { ruleCreator, typecheck } from "../utils";
+import { ruleCreator } from "../utils";
 
 const defaultOptions: {
   checkDecorators?: string[];
@@ -51,7 +52,7 @@ const rule = ruleCreator({
   },
   name: "prefer-composition",
   create: (context, unused: typeof defaultOptions) => {
-    const { couldBeObservable, couldBeSubscription } = typecheck(context);
+    const { couldBeObservable, couldBeSubscription } = getTypeServices(context);
     const [{ checkDecorators = ["Component"] } = {}] = context.options;
 
     type Entry = {
@@ -269,7 +270,7 @@ const rule = ruleCreator({
           checkEntry(entry);
         }
       },
-      ClassProperty: (node: es.Node) => {
+      ClassProperty: (node: es.ClassProperty) => {
         const entry = getEntry();
         if (entry && entry.hasDecorator) {
           entry.classProperties.push(node);

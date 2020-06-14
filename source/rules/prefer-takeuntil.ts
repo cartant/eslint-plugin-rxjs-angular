@@ -9,12 +9,13 @@ import {
 } from "@typescript-eslint/experimental-utils";
 import { stripIndent } from "common-tags";
 import {
+  getTypeServices,
   isCallExpression,
   isIdentifier,
   isMemberExpression,
   isThisExpression,
 } from "eslint-etc";
-import { ruleCreator, typecheck } from "../utils";
+import { ruleCreator } from "../utils";
 
 const messages = {
   noDestroy: "`ngOnDestroy` is not implemented.",
@@ -65,7 +66,7 @@ const rule = ruleCreator({
   },
   name: "prefer-takeuntil",
   create: (context, unused: typeof defaultOptions) => {
-    const { couldBeObservable } = typecheck(context);
+    const { couldBeObservable } = getTypeServices(context);
 
     // If an alias is specified, check for the subject-based destroy only if
     // it's explicitly configured. It's extremely unlikely a subject-based
