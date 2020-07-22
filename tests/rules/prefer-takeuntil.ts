@@ -342,7 +342,6 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
           }
         }
       `,
-      {},
       { options: [{ checkComplete: true }] }
     ),
     fromFixture(
@@ -371,7 +370,6 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
           }
         }
       `,
-      {},
       { options: [{ checkComplete: true }] }
     ),
     fromFixture(
@@ -398,7 +396,6 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
           }
         }
       `,
-      {},
       { options: [{ checkComplete: true }] }
     ),
     fromFixture(
@@ -427,7 +424,6 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
           }
         }
       `,
-      {},
       { options: [{ checkComplete: true }] }
     ),
     fromFixture(
@@ -456,7 +452,6 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
           }
         }
       `,
-      {},
       { options: [{ checkComplete: true }] }
     ),
     fromFixture(
@@ -481,7 +476,6 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
           }
         }
       `,
-      {},
       { options: [{ checkComplete: true }] }
     ),
     fromFixture(
@@ -511,7 +505,6 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
           }
         }
       `,
-      {},
       { options: [{ alias: ["someAlias"] }] }
     ),
     fromFixture(
@@ -573,7 +566,6 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
           }
         }
       `,
-      {},
       {
         options: [
           {
