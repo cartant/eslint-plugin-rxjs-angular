@@ -10,7 +10,7 @@
     "requireindex": "~1.2.0",
     "tslib": "^2.0.0"
   },
-  "description": "Angular RxJS rules for ESLint",
+  "description": "ESLint rules for RxJS and Angular",
   "devDependencies": {
     "@cartant/eslint-config": "^1.0.0",
     "@types/chai": "^4.2.0",
