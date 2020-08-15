@@ -357,7 +357,7 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
           selector: "no-subject-component"
         })
         class NoSubjectComponent implements OnDestroy {
-              ~~~~~~~~~~~~~~~~~~ [notDeclared]
+              ~~~~~~~~~~~~~~~~~~ [notDeclared { "name": "o" }]
           someMethod() {
             o.pipe(
               switchMap(_ => o),
@@ -365,8 +365,8 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
             ).subscribe();
           }
           ngOnDestroy() {
-          ~~~~~~~~~~~ [notCalled]
-          ~~~~~~~~~~~ [notCalled]
+          ~~~~~~~~~~~ [notCalled { "method": "next", "name": "o" }]
+          ~~~~~~~~~~~ [notCalled { "method": "complete", "name": "o" }]
           }
         }
       `,
@@ -419,7 +419,7 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
             ).subscribe();
           }
           ngOnDestroy() {
-          ~~~~~~~~~~~ [notCalled]
+          ~~~~~~~~~~~ [notCalled { "method": "next", "name": "destroy" }]
             this.destroy.complete();
           }
         }
@@ -447,7 +447,7 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
             ).subscribe();
           }
           ngOnDestroy() {
-          ~~~~~~~~~~~ [notCalled]
+          ~~~~~~~~~~~ [notCalled { "method": "complete", "name": "destroy" }]
             this.destroy.next();
           }
         }

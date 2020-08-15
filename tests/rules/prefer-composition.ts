@@ -176,7 +176,7 @@ ruleTester({ types: true }).run("prefer-composition", rule, {
           template: "<span>{{ value }}</span>"
         })
         export class NotDeclaredComponent implements OnInit {
-                     ~~~~~~~~~~~~~~~~~~~~ [notDeclared]
+                     ~~~~~~~~~~~~~~~~~~~~ [notDeclared { "name": "subscription" }]
           value: string;
           ngOnInit() {
             const subscription = new Subscription();
