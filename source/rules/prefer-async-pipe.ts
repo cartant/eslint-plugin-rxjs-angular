@@ -16,12 +16,12 @@ const rule = ruleCreator({
         "Forbids the calling of `subscribe` within Angular components.",
       recommended: false,
     },
-    fixable: null,
+    fixable: undefined,
     messages: {
       forbidden:
         "Calling `subscribe` in a component is forbidden; use an `async` pipe instead.",
     },
-    schema: null,
+    schema: [],
     type: "problem",
   },
   name: "prefer-async-pipe",

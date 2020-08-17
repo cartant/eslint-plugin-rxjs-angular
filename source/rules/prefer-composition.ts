@@ -29,7 +29,7 @@ const rule = ruleCreator({
         "Forbids `subscribe` calls that are not composed within Angular components (and, optionally, within services, directives, and pipes).",
       recommended: false,
     },
-    fixable: null,
+    fixable: undefined,
     messages: {
       notComposed: "Subscription not composed.",
       notDeclared: "Composed subscription `{{name}}` not a class property.",
