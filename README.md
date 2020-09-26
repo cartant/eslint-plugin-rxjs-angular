@@ -1,5 +1,13 @@
 # eslint-plugin-rxjs-angular
 
+[![GitHub License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/cartant/eslint-plugin-rxjs-angular/blob/master/LICENSE)
+[![NPM version](https://img.shields.io/npm/v/eslint-plugin-rxjs-angular.svg)](https://www.npmjs.com/package/eslint-plugin-rxjs-angular)
+[![Downloads](http://img.shields.io/npm/dm/eslint-plugin-rxjs-angular.svg)](https://npmjs.org/package/eslint-plugin-rxjs-angular)
+[![Build status](https://img.shields.io/circleci/build/github/cartant/eslint-plugin-rxjs-angular?token=d3e3fd6613244558287da156fd9e0c4357a2170c)](https://app.circleci.com/pipelines/github/cartant)
+[![dependency status](https://img.shields.io/david/cartant/eslint-plugin-rxjs-angular.svg)](https://david-dm.org/cartant/eslint-plugin-rxjs-angular)
+[![devDependency Status](https://img.shields.io/david/dev/cartant/eslint-plugin-rxjs-angular.svg)](https://david-dm.org/cartant/eslint-plugin-rxjs-angular#info=devDependencies)
+[![peerDependency Status](https://img.shields.io/david/peer/cartant/eslint-plugin-rxjs-angular.svg)](https://david-dm.org/cartant/eslint-plugin-rxjs-angular#info=peerDependencies)
+
 This repo is a WIP.
 
 Eventually, it will contain ESLint versions of the Angular rules in the [`rxjs-tslint-rules`](https://github.com/cartant/rxjs-tslint-rules) package.
