@@ -52,5 +52,5 @@ The package includes the following rules:
 | Rule | Description | Recommended |
 | --- | --- | --- |
 | [`prefer-async-pipe`](https://github.com/cartant/eslint-plugin-rxjs-angular/blob/main/source/rules/prefer-async-pipe.ts) | Forbids the calling of `subscribe` within Angular components. | TBD |
-| [`prefer-composition`](https://github.com/cartant/eslint-plugin-rxjs-angular/blob/main/source/rules/prefer-composition.ts) | Not yet implemented. | TBD |
-| [`prefer-takeuntil`](https://github.com/cartant/eslint-plugin-rxjs-angular/blob/main/source/rules/prefer-takeuntil.ts) | Not yet implemented. | TBD |
+| [`prefer-composition`](https://github.com/cartant/eslint-plugin-rxjs-angular/blob/main/source/rules/prefer-composition.ts) | Forbids `subscribe` calls that are not composed within Angular components (and, optionally, within services, directives, and pipes). | TBD |
+| [`prefer-takeuntil`](https://github.com/cartant/eslint-plugin-rxjs-angular/blob/main/source/rules/prefer-takeuntil.ts) | Calling `subscribe` without an accompanying `takeUntil` is forbidden. | TBD |
