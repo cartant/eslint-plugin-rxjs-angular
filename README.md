@@ -8,9 +8,9 @@
 [![devDependency Status](https://img.shields.io/david/dev/cartant/eslint-plugin-rxjs-angular.svg)](https://david-dm.org/cartant/eslint-plugin-rxjs-angular#info=devDependencies)
 [![peerDependency Status](https://img.shields.io/david/peer/cartant/eslint-plugin-rxjs-angular.svg)](https://david-dm.org/cartant/eslint-plugin-rxjs-angular#info=peerDependencies)
 
-This repo is a WIP.
+This package contains ESLint versions of the Angular/RxJS rules that are in the [`rxjs-tslint-rules`](https://github.com/cartant/rxjs-tslint-rules) package.
 
-Eventually, it will contain ESLint versions of the Angular rules in the [`rxjs-tslint-rules`](https://github.com/cartant/rxjs-tslint-rules) package.
+There is no recommended configuration for this package, as all of the rules are opinionated.
 
 # Install
 
@@ -51,6 +51,6 @@ The package includes the following rules:
 
 | Rule | Description | Recommended |
 | --- | --- | --- |
-| [`prefer-async-pipe`](https://github.com/cartant/eslint-plugin-rxjs-angular/blob/main/source/rules/prefer-async-pipe.ts) | Forbids the calling of `subscribe` within Angular components. | TBD |
-| [`prefer-composition`](https://github.com/cartant/eslint-plugin-rxjs-angular/blob/main/source/rules/prefer-composition.ts) | Forbids `subscribe` calls that are not composed within Angular components (and, optionally, within services, directives, and pipes). | TBD |
-| [`prefer-takeuntil`](https://github.com/cartant/eslint-plugin-rxjs-angular/blob/main/source/rules/prefer-takeuntil.ts) | Calling `subscribe` without an accompanying `takeUntil` is forbidden. | TBD |
+| [`prefer-async-pipe`](https://github.com/cartant/eslint-plugin-rxjs-angular/blob/main/docs/rules/prefer-async-pipe.md) | Forbids the calling of `subscribe` within Angular components. | No |
+| [`prefer-composition`](https://github.com/cartant/eslint-plugin-rxjs-angular/blob/main/docs/rules/prefer-composition.md) | Forbids `subscribe` calls that are not composed within Angular components (and, optionally, within services, directives, and pipes). | No |
+| [`prefer-takeuntil`](https://github.com/cartant/eslint-plugin-rxjs-angular/blob/main/docs/rules/prefer-takeuntil.md) | Calling `subscribe` without an accompanying `takeUntil` is forbidden. | No |
