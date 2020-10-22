@@ -20,7 +20,7 @@ import { ruleCreator } from "../utils";
 const messages = {
   noDestroy: "`ngOnDestroy` is not implemented.",
   noTakeUntil:
-    "Calling `subscribe` without an accompanying `takeUntil` is forbidden.",
+    "Forbids calling `subscribe` without an accompanying `takeUntil`.",
   notCalled: "`{{name}}.{{method}}()` not called.",
   notDeclared: "Subject `{{name}}` not a class property.",
 } as const;
