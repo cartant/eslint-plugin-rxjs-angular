@@ -317,6 +317,33 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
   invalid: [
     fromFixture(
       stripIndent`
+        // no pipe component
+        import { Component, OnDestroy } from "@angular/core";
+        import { of, Subject } from "rxjs";
+        import { switchMap, takeUntil } from "rxjs/operators";
+
+        const o = of("o");
+
+        @Component({
+          selector: "no-pipe-component"
+        })
+        class NoPipeComponent {
+          private destroy = new Subject<void>();
+          someMethod() {
+            const { destroy } = this;
+            o.subscribe();
+              ~~~~~~~~~ [noTakeUntil]
+          }
+          ngOnDestroy() {
+            this.destroy.next();
+            this.destroy.complete();
+          }
+        }
+      `,
+      { options: [{ checkComplete: true }] }
+    ),
+    fromFixture(
+      stripIndent`
         // no takeuntil component
         import { Component, OnDestroy } from "@angular/core";
         import { of, Subject } from "rxjs";
