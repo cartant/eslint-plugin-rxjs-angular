@@ -52,7 +52,7 @@ This rule accepts a single option which is an object with a `checkDecorators` pr
 
 ```json
 {
-  "rxjs/prefer-composition": [
+  "rxjs-angular/prefer-composition": [
     "error",
     { "checkDecorators": ["Component"] }
   ]
