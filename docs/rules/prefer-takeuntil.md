@@ -60,7 +60,7 @@ The `alias` property is an array of names of operators that should be treated si
 
 ```json
 {
-  "rxjs/prefer-composition": [
+  "rxjs-angular/prefer-takeuntil": [
     "error",
     {
       "alias": ["untilDestroyed"],
