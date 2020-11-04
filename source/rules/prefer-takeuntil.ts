@@ -264,7 +264,7 @@ const rule = ruleCreator({
         operators.forEach((operator) => {
           if (isCallExpression(operator)) {
             const { found, name } = checkOperator(operator);
-            takeUntilFound = found;
+            takeUntilFound = takeUntilFound || found;
             if (name) {
               names.add(name);
             }
