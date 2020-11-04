@@ -39,6 +39,34 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
     },
     {
       code: stripIndent`
+        // correct component, not last
+        import { Component, OnDestroy } from "@angular/core";
+        import { of, Subject } from "rxjs";
+        import { map, switchMap, takeUntil } from "rxjs/operators";
+
+        const o = of("o");
+
+        @Component({
+          selector: "correct-component"
+        })
+        class CorrectComponent implements OnDestroy {
+          private destroy = new Subject<void>();
+          someMethod() {
+            o.pipe(
+              switchMap(_ => o),
+              takeUntil(this.destroy),
+              map(value => value)
+            ).subscribe();
+          }
+          ngOnDestroy() {
+            this.destroy.next();
+            this.destroy.complete();
+          }
+        }
+      `,
+    },
+    {
+      code: stripIndent`
         // destructured component
         import { Component, OnDestroy } from "@angular/core";
         import { of, Subject } from "rxjs";
