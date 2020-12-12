@@ -341,6 +341,34 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
         },
       ],
     },
+    {
+      code: stripIndent`
+        // https://github.com/cartant/eslint-plugin-rxjs-angular/issues/5
+        import { Component } from "@angular/core";
+        import { of } from "rxjs";
+        import { switchMap, take } from "rxjs/operators";
+
+        const o = of("o");
+
+        @Component({
+          selector: "component-with-alias"
+        })
+        class CorrectComponent implements OnDestroy {
+          someMethod() {
+            o.pipe(
+              switchMap(_ => o),
+              take(1)
+            ).subscribe();
+          }
+        }
+      `,
+      options: [
+        {
+          alias: ["take"],
+          checkDestroy: false,
+        },
+      ],
+    },
   ],
   invalid: [
     fromFixture(
