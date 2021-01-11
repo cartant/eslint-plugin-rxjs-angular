@@ -1,3 +1,10 @@
+<a name="1.0.4"></a>
+## [1.0.4](https://github.com/cartant/eslint-plugin-rxjs-angular/compare/v1.0.3...v1.0.4) (2021-01-11)
+
+## Changes
+
+* Fix GitHub URL for docs. ([f645a37](https://github.com/cartant/eslint-plugin-rxjs-angular/commit/f645a37))
+
 <a name="1.0.3"></a>
 ## [1.0.3](https://github.com/cartant/eslint-plugin-rxjs-angular/compare/v1.0.2...v1.0.3) (2020-11-28)
 
