@@ -1,3 +1,10 @@
+<a name="1.0.5"></a>
+## [1.0.5](https://github.com/cartant/eslint-plugin-rxjs-angular/compare/v1.0.4...v1.0.5) (2021-03-20)
+
+## Fixes
+
+* Enable TypeScript `strict` option and fix related problems. ([109d2f1](https://github.com/cartant/eslint-plugin-rxjs-angular/commit/109d2f1))
+
 <a name="1.0.4"></a>
 ## [1.0.4](https://github.com/cartant/eslint-plugin-rxjs-angular/compare/v1.0.3...v1.0.4) (2021-01-11)
 
