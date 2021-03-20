@@ -16,7 +16,7 @@ import {
 } from "eslint-etc";
 import { ruleCreator } from "../utils";
 
-const defaultOptions: {
+const defaultOptions: readonly {
   checkDecorators?: string[];
 }[] = [];
 
@@ -100,7 +100,7 @@ const rule = ruleCreator({
       if (!ngOnDestroyDefinition) {
         context.report({
           messageId: "notImplemented",
-          node: classDeclaration.id,
+          node: classDeclaration.id ?? classDeclaration,
         });
         return;
       }
@@ -113,7 +113,7 @@ const rule = ruleCreator({
           context.report({
             data: { name: subscription },
             messageId: "notDeclared",
-            node: classDeclaration.id,
+            node: classDeclaration.id ?? classDeclaration,
           });
           return;
         }
@@ -186,6 +186,9 @@ const rule = ruleCreator({
       // subscription.
       const { addCallExpressions, subscriptions } = entry;
       const parent = getParent(callExpression);
+      if (!parent) {
+        return false;
+      }
       if (isCallExpression(parent)) {
         const addCallExpression = addCallExpressions.find(
           (callExpression) => callExpression === parent

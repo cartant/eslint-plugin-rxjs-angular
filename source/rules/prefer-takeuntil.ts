@@ -26,7 +26,7 @@ const messages = {
 } as const;
 type MessageIds = keyof typeof messages;
 
-const defaultOptions: {
+const defaultOptions: readonly {
   alias?: string[];
   checkComplete?: boolean;
   checkDecorators?: string[];
@@ -126,7 +126,7 @@ const rule = ruleCreator({
       if (!ngOnDestroyDefinition) {
         context.report({
           messageId: "noDestroy",
-          node: classDeclaration.id,
+          node: classDeclaration.id ?? classDeclaration,
         });
         return;
       }
@@ -158,7 +158,7 @@ const rule = ruleCreator({
           check.descriptors.push({
             data: { name },
             messageId: "notDeclared",
-            node: classDeclaration.id,
+            node: classDeclaration.id ?? classDeclaration,
           });
         }
         if (!checkSubjectCall(name, nextCallExpressions)) {
@@ -179,10 +179,14 @@ const rule = ruleCreator({
 
       subscribeCallExpressionsToNames.forEach((names) => {
         const report = [...names].every(
-          (name) => namesToChecks.get(name).descriptors.length > 0
+          /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
+          (name) => namesToChecks.get(name)!.descriptors.length > 0
         );
         if (report) {
-          names.forEach((name) => (namesToChecks.get(name).report = true));
+          names.forEach(
+            /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
+            (name) => (namesToChecks.get(name)!.report = true)
+          );
         }
       });
       namesToChecks.forEach((check) => {
@@ -245,7 +249,8 @@ const rule = ruleCreator({
 
     function checkSubscribe(callExpression: es.CallExpression, entry: Entry) {
       const { subscribeCallExpressionsToNames } = entry;
-      const names = subscribeCallExpressionsToNames.get(callExpression);
+      /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
+      const names = subscribeCallExpressionsToNames.get(callExpression)!;
       let takeUntilFound = false;
 
       const { callee } = callExpression;
