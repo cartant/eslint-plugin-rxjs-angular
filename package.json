@@ -80,5 +80,5 @@
     "test:debug": "mocha -r ts-node/register -t 5000 tests/rules/prefer-async-pipe.ts",
     "test:rules": "mocha -r ts-node/register -t 5000 tests/rules/*.ts"
   },
-  "version": "1.0.4"
+  "version": "1.0.5"
 }
