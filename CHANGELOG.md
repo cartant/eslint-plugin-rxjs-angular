@@ -1,3 +1,10 @@
+<a name="1.0.6"></a>
+## [1.0.6](https://github.com/cartant/eslint-plugin-rxjs-angular/compare/v1.0.5...v1.0.6) (2021-03-22)
+
+## Fixes
+
+* Set minimum `eslint-etc` version. ([d052beb](https://github.com/cartant/eslint-plugin-rxjs-angular/commit/d052beb))
+
 <a name="1.0.5"></a>
 ## [1.0.5](https://github.com/cartant/eslint-plugin-rxjs-angular/compare/v1.0.4...v1.0.5) (2021-03-20)
 
