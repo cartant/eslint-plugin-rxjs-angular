@@ -37,12 +37,12 @@ const rule = ruleCreator({
   defaultOptions,
   meta: {
     docs: {
-      category: "Best Practices",
       description:
         "Forbids `subscribe` calls without an accompanying `takeUntil` within Angular components (and, optionally, within services, directives, and pipes).",
       recommended: false,
     },
     fixable: undefined,
+    hasSuggestions: false,
     messages,
     schema: [
       {
@@ -82,7 +82,7 @@ const rule = ruleCreator({
 
     type Entry = {
       classDeclaration: es.ClassDeclaration;
-      classProperties: es.Node[];
+      propertyDefinitions: es.PropertyDefinition[];
       completeCallExpressions: es.CallExpression[];
       hasDecorator: boolean;
       nextCallExpressions: es.CallExpression[];
@@ -240,11 +240,11 @@ const rule = ruleCreator({
     }
 
     function checkSubjectProperty(name: string, entry: Entry) {
-      const { classProperties } = entry;
-      const classProperty = classProperties.find(
-        (classProperty: any) => classProperty.key.name === name
+      const { propertyDefinitions } = entry;
+      const propertyDefinition = propertyDefinitions.find(
+        (propertyDefinition: any) => propertyDefinition.key.name === name
       );
-      return Boolean(classProperty);
+      return Boolean(propertyDefinition);
     }
 
     function checkSubscribe(callExpression: es.CallExpression, entry: Entry) {
@@ -321,7 +321,7 @@ const rule = ruleCreator({
       ClassDeclaration: (node: es.ClassDeclaration) => {
         entries.push({
           classDeclaration: node,
-          classProperties: [],
+          propertyDefinitions: [],
           completeCallExpressions: [],
           nextCallExpressions: [],
           hasDecorator: hasDecorator(node),
@@ -338,10 +338,10 @@ const rule = ruleCreator({
           checkEntry(entry);
         }
       },
-      ClassProperty: (node: es.Node) => {
+      PropertyDefinition: (node: es.PropertyDefinition) => {
         const entry = getEntry();
         if (entry && entry.hasDecorator) {
-          entry.classProperties.push(node);
+          entry.propertyDefinitions.push(node);
         }
       },
       "MethodDefinition[key.name='ngOnDestroy'][kind='method']": (
@@ -352,22 +352,20 @@ const rule = ruleCreator({
           entry.ngOnDestroyDefinition = node;
         }
       },
-      "MethodDefinition[key.name='ngOnDestroy'][kind='method'] CallExpression[callee.property.name='next']": (
-        node: es.CallExpression
-      ) => {
-        const entry = getEntry();
-        if (entry && entry.hasDecorator) {
-          entry.nextCallExpressions.push(node);
-        }
-      },
-      "MethodDefinition[key.name='ngOnDestroy'][kind='method'] CallExpression[callee.property.name='complete']": (
-        node: es.CallExpression
-      ) => {
-        const entry = getEntry();
-        if (entry && entry.hasDecorator) {
-          entry.completeCallExpressions.push(node);
-        }
-      },
+      "MethodDefinition[key.name='ngOnDestroy'][kind='method'] CallExpression[callee.property.name='next']":
+        (node: es.CallExpression) => {
+          const entry = getEntry();
+          if (entry && entry.hasDecorator) {
+            entry.nextCallExpressions.push(node);
+          }
+        },
+      "MethodDefinition[key.name='ngOnDestroy'][kind='method'] CallExpression[callee.property.name='complete']":
+        (node: es.CallExpression) => {
+          const entry = getEntry();
+          if (entry && entry.hasDecorator) {
+            entry.completeCallExpressions.push(node);
+          }
+        },
     };
   },
 });

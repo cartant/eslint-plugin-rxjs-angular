@@ -24,12 +24,12 @@ const rule = ruleCreator({
   defaultOptions,
   meta: {
     docs: {
-      category: "Best Practices",
       description:
         "Forbids `subscribe` calls that are not composed within Angular components (and, optionally, within services, directives, and pipes).",
       recommended: false,
     },
     fixable: undefined,
+    hasSuggestions: false,
     messages: {
       notComposed: "Subscription not composed.",
       notDeclared: "Composed subscription `{{name}}` not a class property.",
@@ -58,7 +58,7 @@ const rule = ruleCreator({
     type Entry = {
       addCallExpressions: es.CallExpression[];
       classDeclaration: es.ClassDeclaration;
-      classProperties: es.ClassProperty[];
+      propertyDefinitions: es.PropertyDefinition[];
       hasDecorator: boolean;
       ngOnDestroyDefinition?: es.MethodDefinition;
       subscribeCallExpressions: es.CallExpression[];
@@ -70,7 +70,7 @@ const rule = ruleCreator({
     function checkEntry(record: Entry) {
       const {
         classDeclaration,
-        classProperties,
+        propertyDefinitions,
         ngOnDestroyDefinition,
         subscribeCallExpressions,
         subscriptions,
@@ -106,10 +106,11 @@ const rule = ruleCreator({
       }
 
       subscriptions.forEach((subscription) => {
-        const classProperty = classProperties.find(
-          (classProperty: any) => classProperty.key.name === subscription
+        const propertyDefinition = propertyDefinitions.find(
+          (propertyDefinition: any) =>
+            propertyDefinition.key.name === subscription
         );
-        if (!classProperty) {
+        if (!propertyDefinition) {
           context.report({
             data: { name: subscription },
             messageId: "notDeclared",
@@ -128,7 +129,7 @@ const rule = ruleCreator({
           context.report({
             data: { name: subscription },
             messageId: "notUnsubscribed",
-            node: classProperty.key,
+            node: propertyDefinition.key,
           });
           return;
         }
@@ -260,7 +261,7 @@ const rule = ruleCreator({
         entries.push({
           addCallExpressions: [],
           classDeclaration: node,
-          classProperties: [],
+          propertyDefinitions: [],
           hasDecorator: hasDecorator(node),
           subscribeCallExpressions: [],
           subscriptions: new Set<string>(),
@@ -273,10 +274,10 @@ const rule = ruleCreator({
           checkEntry(entry);
         }
       },
-      ClassProperty: (node: es.ClassProperty) => {
+      PropertyDefinition: (node: es.PropertyDefinition) => {
         const entry = getEntry();
         if (entry && entry.hasDecorator) {
-          entry.classProperties.push(node);
+          entry.propertyDefinitions.push(node);
         }
       },
       "MethodDefinition[key.name='ngOnDestroy'][kind='method']": (
@@ -287,14 +288,13 @@ const rule = ruleCreator({
           entry.ngOnDestroyDefinition = node;
         }
       },
-      "MethodDefinition[key.name='ngOnDestroy'][kind='method'] CallExpression[callee.property.name='unsubscribe']": (
-        node: es.CallExpression
-      ) => {
-        const entry = getEntry();
-        if (entry && entry.hasDecorator) {
-          entry.unsubscribeCallExpressions.push(node);
-        }
-      },
+      "MethodDefinition[key.name='ngOnDestroy'][kind='method'] CallExpression[callee.property.name='unsubscribe']":
+        (node: es.CallExpression) => {
+          const entry = getEntry();
+          if (entry && entry.hasDecorator) {
+            entry.unsubscribeCallExpressions.push(node);
+          }
+        },
     };
   },
 });
