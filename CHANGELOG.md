@@ -1,3 +1,10 @@
+<a name="2.0.0"></a>
+## [2.0.0](https://github.com/cartant/eslint-plugin-rxjs-angular/compare/v1.0.6...v2.0.0) (2021-10-17)
+
+## Breaking Changes
+
+* Support `eslint` v8 and `@typescript-eslint` v5. ([8753aec](https://github.com/cartant/eslint-plugin-rxjs-angular/commit/8753aec))
+
 <a name="1.0.6"></a>
 ## [1.0.6](https://github.com/cartant/eslint-plugin-rxjs-angular/compare/v1.0.5...v1.0.6) (2021-03-22)
 
