@@ -50,11 +50,15 @@ class SomeComponent implements OnDestroy, OnInit {
 
 ## Options
 
-This rule accepts a single option which is an object with `checkComplete`, `checkDecorators`, `checkDestroy` and `alias` properties.
+This rule accepts a single option which is an object with `checkComplete`, `checkDecorators`, `checkDestroy`, `superClass` and `alias` properties.
 
 The `checkComplete` property is a boolean that determines whether or not `complete` must be called after `next` and the `checkDestroy` property is a boolean that determines whether or not a `Subject`-based `ngOnDestroy` must be implemented.
 
 The `checkDecorators` property is an array containing the names of the decorators that determine whether or not a class is checked. By default, `checkDecorators` is `["Component"]`.
+
+The `checkDestroy` property is a boolean that determines whether or not a `Subject`-based `ngOnDestroy` must be implemented.
+
+The `superClass` property is an array containing the names of classes to extend from that already implements a `Subject`-based `ngOnDestroy`.
 
 The `alias` property is an array of names of operators that should be treated similarly to `takeUntil`.
 
@@ -66,7 +70,8 @@ The `alias` property is an array of names of operators that should be treated si
       "alias": ["untilDestroyed"],
       "checkComplete": true,
       "checkDecorators": ["Component"],
-      "checkDestroy": true
+      "checkDestroy": true,
+      "superClass": []
     }
   ]
 }
