@@ -34,6 +34,28 @@ ruleTester({ types: true }).run("prefer-composition", rule, {
     },
     {
       code: stripIndent`
+        // composed component with private JavaScript property
+        import { Component, OnDestroy, OnInit } from "@angular/core";
+        import { of, Subscription } from "rxjs";
+
+        @Component({
+          selector: "composed-component",
+          template: "<span>{{ value }}</span>"
+        })
+        export class ComposedComponent implements OnInit, OnDestroy {
+          value: string;
+          #subscription = new Subscription();
+          ngOnInit() {
+            this.#subscription.add(of("foo").subscribe(value => this.value = value));
+          }
+          ngOnDestroy() {
+            this.#subscription.unsubscribe();
+          }
+        }
+      `,
+    },
+    {
+      code: stripIndent`
         // variable composed component
         import { Component, OnDestroy, OnInit } from "@angular/core";
         import { of, Subscription } from "rxjs";
@@ -47,12 +69,37 @@ ruleTester({ types: true }).run("prefer-composition", rule, {
           private subscription = new Subscription();
           ngOnInit() {
             let subscription = of("foo").subscribe(value => this.value = value);
-            this.subscription.add(subscription);1
+            this.subscription.add(subscription);
             subscription = of("bar").subscribe(value => this.value = value);
             this.subscription.add(subscription);
           }
           ngOnDestroy() {
             this.subscription.unsubscribe();
+          }
+        }
+      `,
+    },
+    {
+      code: stripIndent`
+        // variable composed component with private JavaScript property
+        import { Component, OnDestroy, OnInit } from "@angular/core";
+        import { of, Subscription } from "rxjs";
+
+        @Component({
+          selector: "variable-composed-component",
+          template: "<span>{{ value }}</span>"
+        })
+        export class VariableComposedComponent implements OnInit, OnDestroy {
+          value: string;
+          #subscription = new Subscription();
+          ngOnInit() {
+            let subscription = of("foo").subscribe(value => this.value = value);
+            this.#subscription.add(subscription);
+            subscription = of("bar").subscribe(value => this.value = value);
+            this.#subscription.add(subscription);
+          }
+          ngOnDestroy() {
+            this.#subscription.unsubscribe();
           }
         }
       `,
@@ -147,6 +194,28 @@ ruleTester({ types: true }).run("prefer-composition", rule, {
     ),
     fromFixture(
       stripIndent`
+        // not unsubscribed component with private JavaScript property
+        import { Component, OnDestroy, OnInit } from "@angular/core";
+        import { of, Subscription } from "rxjs";
+
+        @Component({
+          selector: "not-unsubscribed-component",
+          template: "<span>{{ value }}</span>"
+        })
+        export class NotUnsubscribedComponent implements OnInit, OnDestroy {
+          value: string;
+          #subscription = new Subscription();
+          ~~~~~~~~~~~~~ [notUnsubscribed]
+          ngOnInit() {
+            this.#subscription.add(of("foo").subscribe(value => this.value = value));
+          }
+          ngOnDestroy() {
+          }
+        }
+      `
+    ),
+    fromFixture(
+      stripIndent`
         // not destroyed component
         import { Component, OnDestroy, OnInit } from "@angular/core";
         import { of, Subscription } from "rxjs";
@@ -161,6 +230,26 @@ ruleTester({ types: true }).run("prefer-composition", rule, {
           private subscription = new Subscription();
           ngOnInit() {
             this.subscription.add(of("foo").subscribe(value => this.value = value));
+          }
+        }
+      `
+    ),
+    fromFixture(
+      stripIndent`
+        // not destroyed component with Private JavaScript property
+        import { Component, OnDestroy, OnInit } from "@angular/core";
+        import { of, Subscription } from "rxjs";
+
+        @Component({
+          selector: "not-destroyed-component",
+          template: "<span>{{ value }}</span>"
+        })
+        export class NotDestroyedComponent implements OnInit {
+                     ~~~~~~~~~~~~~~~~~~~~~ [notImplemented]
+          value: string;
+          #subscription = new Subscription();
+          ngOnInit() {
+            this.#subscription.add(of("foo").subscribe(value => this.value = value));
           }
         }
       `

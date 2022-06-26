@@ -15,7 +15,7 @@ import {
   isMemberExpression,
   isThisExpression,
 } from "eslint-etc";
-import { ruleCreator } from "../utils";
+import { ruleCreator, isPrivateIdentifier } from "../utils";
 
 const messages = {
   noDestroy: "`ngOnDestroy` is not implemented.",
@@ -207,7 +207,7 @@ const rule = ruleCreator({
           if (
             isMemberExpression(arg) &&
             isThisExpression(arg.object) &&
-            isIdentifier(arg.property)
+            (isIdentifier(arg.property) || isPrivateIdentifier(arg.property))
           ) {
             return { found: true, name: arg.property.name };
           } else if (arg && isIdentifier(arg)) {
@@ -233,7 +233,8 @@ const rule = ruleCreator({
           (isMemberExpression(callee) &&
             isMemberExpression(callee.object) &&
             isThisExpression(callee.object.object) &&
-            isIdentifier(callee.object.property) &&
+            (isIdentifier(callee.object.property) ||
+              isPrivateIdentifier(callee.object.property)) &&
             callee.object.property.name === name)
       );
       return Boolean(callExpression);

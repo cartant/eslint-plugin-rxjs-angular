@@ -14,7 +14,7 @@ import {
   isMemberExpression,
   isVariableDeclarator,
 } from "eslint-etc";
-import { ruleCreator } from "../utils";
+import { ruleCreator, isPrivateIdentifier } from "../utils";
 
 const defaultOptions: readonly {
   checkDecorators?: string[];
@@ -145,7 +145,11 @@ const rule = ruleCreator({
       const { callee } = callExpression;
       if (isMemberExpression(callee)) {
         const { object } = callee;
-        if (isMemberExpression(object) && isIdentifier(object.property)) {
+        if (
+          isMemberExpression(object) &&
+          (isIdentifier(object.property) ||
+            isPrivateIdentifier(object.property))
+        ) {
           return object.property.name;
         }
         if (isIdentifier(object)) {
@@ -186,6 +190,7 @@ const rule = ruleCreator({
       // subscription or if it's assigned to a variable that is added to a
       // subscription.
       const { addCallExpressions, subscriptions } = entry;
+
       const parent = getParent(callExpression);
       if (!parent) {
         return false;
@@ -208,6 +213,7 @@ const rule = ruleCreator({
         subscriptions.add(name);
         return true;
       }
+
       if (isVariableDeclarator(parent) && isIdentifier(parent.id)) {
         return isVariableComposed(parent.id, entry);
       }
