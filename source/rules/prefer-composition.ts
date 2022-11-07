@@ -11,10 +11,11 @@ import {
   isAssignmentExpression,
   isCallExpression,
   isIdentifier,
+  isPrivateIdentifier,
   isMemberExpression,
   isVariableDeclarator,
 } from "eslint-etc";
-import { ruleCreator, isPrivateIdentifier } from "../utils";
+import { ruleCreator } from "../utils";
 
 const defaultOptions: readonly {
   checkDecorators?: string[];

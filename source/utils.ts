@@ -4,16 +4,8 @@
  */
 
 import { ESLintUtils } from "@typescript-eslint/experimental-utils";
-import { TSESTree as es } from "@typescript-eslint/experimental-utils";
 
 export const ruleCreator = ESLintUtils.RuleCreator(
   (name) =>
     `https://github.com/cartant/eslint-plugin-rxjs-angular/tree/main/docs/rules/${name}.md`
 );
-
-// TODO: Remove when eslint-etc supports isPrivateIdentifier
-export function isPrivateIdentifier(
-  node: es.Node
-): node is es.PrivateIdentifier {
-  return node.type === "PrivateIdentifier";
-}
