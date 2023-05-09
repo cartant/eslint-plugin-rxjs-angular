@@ -1,3 +1,10 @@
+<a name="2.0.1"></a>
+## [2.0.1](https://github.com/cartant/eslint-plugin-rxjs-angular/compare/v2.0.0...v2.0.1) (2023-05-09)
+
+## Fixes
+
+* Widen the TypeScript peer dependency. ([6fa30e9](https://github.com/cartant/eslint-plugin-rxjs-angular/commit/6fa30e9))
+
 <a name="2.0.0"></a>
 ## [2.0.0](https://github.com/cartant/eslint-plugin-rxjs-angular/compare/v1.0.6...v2.0.0) (2021-10-17)
 
