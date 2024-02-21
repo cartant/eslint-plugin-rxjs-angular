@@ -18,6 +18,7 @@ import { ruleCreator } from "../utils";
 
 const defaultOptions: readonly {
   checkDecorators?: string[];
+  superClass?: string[];
 }[] = [];
 
 const rule = ruleCreator({
@@ -40,11 +41,13 @@ const rule = ruleCreator({
       {
         properties: {
           checkDecorators: { type: "array", items: { type: "string" } },
+          superClass: { type: "array", items: { type: "string" } },
         },
         type: "object",
         description: stripIndent`
         An optional object with an optional \`checkDecorators\` property.
         The \`checkDecorators\` property is an array containing the names of the decorators that determine whether or not a class is checked.
+        The \`superClass\` property is an array containing the names of classes to extend from that already implements a \`Subject\`-based \`ngOnDestroy\`.
       `,
       },
     ],
@@ -53,7 +56,8 @@ const rule = ruleCreator({
   name: "prefer-composition",
   create: (context, unused: typeof defaultOptions) => {
     const { couldBeObservable, couldBeSubscription } = getTypeServices(context);
-    const [{ checkDecorators = ["Component"] } = {}] = context.options;
+    const [{ checkDecorators = ["Component"], superClass = [] } = {}] =
+      context.options;
 
     type Entry = {
       addCallExpressions: es.CallExpression[];
@@ -61,6 +65,7 @@ const rule = ruleCreator({
       propertyDefinitions: es.PropertyDefinition[];
       hasDecorator: boolean;
       ngOnDestroyDefinition?: es.MethodDefinition;
+      extendsSuperClassDeclaration?: es.ClassDeclaration;
       subscribeCallExpressions: es.CallExpression[];
       subscriptions: Set<string>;
       unsubscribeCallExpressions: es.CallExpression[];
@@ -72,6 +77,7 @@ const rule = ruleCreator({
         classDeclaration,
         propertyDefinitions,
         ngOnDestroyDefinition,
+        extendsSuperClassDeclaration,
         subscribeCallExpressions,
         subscriptions,
         unsubscribeCallExpressions,
@@ -83,6 +89,9 @@ const rule = ruleCreator({
       subscribeCallExpressions.forEach((callExpression) => {
         const { callee } = callExpression;
         if (isMemberExpression(callee)) {
+          if (extendsSuperClassDeclaration) {
+            return;
+          }
           const { object, property } = callee;
           if (!couldBeObservable(object)) {
             return;
@@ -98,6 +107,9 @@ const rule = ruleCreator({
       });
 
       if (!ngOnDestroyDefinition) {
+        if (extendsSuperClassDeclaration) {
+          return;
+        }
         context.report({
           messageId: "notImplemented",
           node: classDeclaration.id ?? classDeclaration,
@@ -240,6 +252,20 @@ const rule = ruleCreator({
       return true;
     }
 
+    const extendsSuperClassDeclaration =
+      superClass.length === 0
+        ? {}
+        : {
+            [`ClassDeclaration:matches(${superClass
+              .map((className) => `[superClass.name="${className}"]`)
+              .join()})`]: (node: es.ClassDeclaration) => {
+              const entry = getEntry();
+              if (entry && entry.hasDecorator) {
+                entry.extendsSuperClassDeclaration = node;
+              }
+            },
+          };
+
     return {
       "CallExpression[callee.property.name='add']": (
         node: es.CallExpression
@@ -280,6 +306,7 @@ const rule = ruleCreator({
           entry.propertyDefinitions.push(node);
         }
       },
+      ...extendsSuperClassDeclaration,
       "MethodDefinition[key.name='ngOnDestroy'][kind='method']": (
         node: es.MethodDefinition
       ) => {
